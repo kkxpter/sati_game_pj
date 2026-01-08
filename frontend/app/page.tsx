@@ -1,4 +1,6 @@
 'use client';
+/// <reference path="../src/global.d.ts" />
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 // import MatrixBg from '@/components/MatrixBg'; 
@@ -115,7 +117,7 @@ export default function HomePage() {
                   <span className="text-sm font-bold text-white leading-none">{user.username}</span>
                 </div>
                 <button onClick={handleLogout} className="ml-2 p-1.5 rounded-full bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-all" title="Logout">
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                   <span className="h-4 w-4 inline-flex items-center justify-center">🚪</span>
                 </button>
               </div>
             ) : (
@@ -124,7 +126,7 @@ export default function HomePage() {
                 className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-2.5 rounded-full font-bold shadow-[0_0_20px_rgba(59,130,246,0.5)] hover:shadow-[0_0_30px_rgba(59,130,246,0.7)] transition-all transform hover:-translate-y-0.5"
               >
                 <span>เข้าสู่ระบบเพื่อเล่น</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                <span className="h-4 w-4 animate-pulse inline-flex items-center justify-center">➡️</span>
               </button>
             )}
           </div>
@@ -164,7 +166,7 @@ export default function HomePage() {
                     ตอบคำถามวัดกึ๋น
                   </div>
                   <div className="text-[10px] text-gray-400 flex items-center gap-1">
-                    {!user ? <span className="text-red-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-green-400 font-bold">{stats.normal} รอบ</span></span>}
+                    {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-green-400 font-bold">{stats.normal} รอบ</span></span>}
                   </div>
                 </div>
               </div>
@@ -181,7 +183,7 @@ export default function HomePage() {
                     ทุบไวรัสวัดนิ้ว
                   </div>
                   <div className="text-[10px] text-gray-400 flex items-center gap-1">
-                  {!user ? <span className="text-red-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>โหมดแอคชั่น: <span className="text-red-400 font-bold">มันส์มาก!</span></span>}
+                  {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>โหมดแอคชั่น: <span className="text-red-400 font-bold">มันส์มาก!</span></span>}
                   </div>
                 </div>
               </div>
@@ -198,7 +200,7 @@ export default function HomePage() {
                     แชทปั่นแก๊งคอล
                   </div>
                   <div className="text-[10px] text-gray-400 flex items-center gap-1">
-                  {!user ? <span className="text-red-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-blue-400 font-bold">{stats.chat} รอบ</span></span>}
+                  {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-blue-400 font-bold">{stats.chat} รอบ</span></span>}
                   </div>
                 </div>
               </div>
