@@ -37,6 +37,14 @@ console.log('✅ Connected to database (via pool)');
 app.use('/', authRoute(pool)); 
 app.use('/questions', questionRoute(pool));
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-});
+// ... โค้ดส่วนบนเหมือนเดิม ...
+
+// app.listen เดิม ให้ครอบด้วยเงื่อนไขนี้ (เพื่อให้รันในเครื่องได้เหมือนเดิม)
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+  });
+}
+
+// สิ่งที่ต้องเพิ่ม: Export app เพื่อให้ Vercel เอาไปทำเป็น Serverless Function
+export default app;
