@@ -100,7 +100,7 @@ export default function RegisterPage() {
           birthdate: `${yearAD}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       };
 
-      const res = await fetch('http://localhost:4000/register', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
