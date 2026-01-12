@@ -22,7 +22,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({ 
     username: '', email: '', password: '', confirmPassword: '', 
     birthDay: '', birthMonth: '', birthYear: '',
-    phone: '', address: ''
+    phone: '', address: '' // address ใส่เผื่อไว้ (ถ้าใน UI ไม่เปิดก็จะเป็นค่าว่าง)
   });
   const [error, setError] = useState('');
 
@@ -60,68 +60,77 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    // --- Validation (เหมือนเดิม) ---
+    // --- 1. ตรวจสอบความถูกต้อง (Validation) ---
     if (formData.password !== formData.confirmPassword) { setError('รหัสผ่านไม่ตรงกัน'); return; }
     if (formData.password.length < 4) { setError('รหัสผ่านสั้นเกินไป'); return; }
+    // Regex Email อย่างง่าย
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) { setError('รูปแบบอีเมลไม่ถูกต้อง'); return; }
     if (formData.phone.length !== 10) { setError('เบอร์โทรศัพท์ต้องมี 10 หลัก'); return; }
 
-    // แปลงวันเกิด
-    const day = parseInt(formData.birthDay);
-    const month = parseInt(formData.birthMonth);
-    const yearAD = parseInt(formData.birthYear); // ✅ ใช้ปี ค.ศ. โดยตรง ไม่ต้องลบ 543 แล้ว
+    // ตรวจสอบวันเกิด
+    if (!formData.birthDay || !formData.birthMonth || !formData.birthYear) {
+        setError('กรุณากรอกวันเกิดให้ครบถ้วน');
+        return;
+    }
 
-    // ตรวจสอบความถูกต้องของวันที่
-    const birthDateObj = new Date(yearAD, month - 1, day);
+    // คำนวณอายุ และ เตรียมวันที่สำหรับ Database
+    const yearBE = parseInt(formData.birthYear);
+    const yearAD = yearBE - 543; // แปลง พ.ศ. เป็น ค.ศ.
+    const birthDateObj = new Date(yearAD, parseInt(formData.birthMonth) - 1, parseInt(formData.birthDay));
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (birthDateObj.getFullYear() !== yearAD || birthDateObj.getMonth() !== month - 1 || birthDateObj.getDate() !== day) {
-        setError('วันที่ระบุไม่มีจริงในปฏิทิน'); return;
+    if (birthDateObj > today) {
+        setError('วันเกิดต้องไม่เกินวันปัจจุบัน');
+        return;
     }
-    if (birthDateObj > today) { setError('วันเกิดห้ามเกินวันนี้นะ'); return; }
 
-    // คำนวณอายุ
     let age = today.getFullYear() - birthDateObj.getFullYear();
     const m = today.getMonth() - birthDateObj.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) { age--; }
-    if (age < 10) { setError('ขออภัย ผู้ใช้งานต้องมีอายุ 10 ปีขึ้นไป'); return; }
+    if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
+        age--;
+    }
 
+    if (age < 10) { setError('ขออภัย ผู้ใช้งานต้องมีอายุ 10 ปีขึ้นไป'); return; }
+    
+    // --- 2. ส่งข้อมูลไป Backend (ของจริง) ---
     setIsLoading(true);
 
     try {
-      const payload = {
-          username: formData.username,
-          password: formData.password,
-          email: formData.email,
-          phone: formData.phone,
-          // address: formData.address, // ❌ เอาออก หรือส่งเป็น String ว่างไปก่อนเพราะปิดช่องกรอกไว้
-          address: '', 
-          birthdate: `${yearAD}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      };
+      // เตรียมรูปแบบวันที่ YYYY-MM-DD
+      const formattedBirthDate = `${yearAD}-${formData.birthMonth.padStart(2, '0')}-${formData.birthDay.padStart(2, '0')}`;
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+      // ✅ ยิง API ไปที่ Backend
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            username: formData.username,
+            password: formData.password,
+            email: formData.email,
+            phone: formData.phone,
+            birthdate: formattedBirthDate,
+            address: formData.address || '-' // ถ้าไม่มีที่อยู่ให้ใส่ขีด หรือส่งค่าว่าง
+        })
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-          throw new Error(data.error || 'สมัครสมาชิกไม่สำเร็จ');
+        throw new Error(data.error || 'สมัครสมาชิกไม่สำเร็จ');
       }
       
-      console.log('Register Success:', data);
+      // สมัครผ่านแล้ว
       alert('สมัครสมาชิกเรียบร้อย! กรุณาเข้าสู่ระบบ');
       router.push('/login');
 
     } catch (err) {
-      setError((err as Error).message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ');
+      setError((err as Error).message);
+    } finally {
       setIsLoading(false);
     }
   };
-
+  
   return (
     <main className="relative w-screen h-screen flex flex-col items-center justify-center p-4 bg-slate-900 font-sans overflow-hidden">
       
@@ -188,8 +197,7 @@ export default function RegisterPage() {
                 </div>
                 
                 <div className="group relative">
-                    {/* ✅ แก้ไข Label เป็น ค.ศ. */}
-                    <label className="text-[10px] text-gray-400 font-bold ml-2 mb-1 block group-focus-within:text-yellow-400 transition-colors uppercase tracking-wider">วันเดือนปีเกิด (วว/ดด/ปี ค.ศ.)</label>
+                    <label className="text-[10px] text-gray-400 font-bold ml-2 mb-1 block group-focus-within:text-yellow-400 transition-colors uppercase tracking-wider">วันเดือนปีเกิด (วว/ดด/ปี พ.ศ.)</label>
                     
                     <div className="relative flex items-center w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 transition-all focus-within:border-yellow-500 focus-within:ring-1 focus-within:ring-yellow-500">
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-yellow-400 transition-colors pointer-events-none">
@@ -214,10 +222,9 @@ export default function RegisterPage() {
                             />
                             <span className="text-gray-500">/</span>
                             
-                            {/* ✅ แก้ไข Placeholder เป็น ค.ศ. */}
                             <input 
                                 ref={yearRef}
-                                type="tel" name="birthYear" placeholder="2000" maxLength={4} required
+                                type="tel" name="birthYear" placeholder="2543" maxLength={4} required
                                 value={formData.birthYear} onChange={handleChange} 
                                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, monthRef)}
                                 className="w-[5ch] bg-transparent text-center focus:outline-none placeholder-gray-600"
@@ -227,20 +234,7 @@ export default function RegisterPage() {
                 </div>
             </div>
 
-            {/* Row 3: ที่อยู่ (COMMENTED OUT) */}
-            {/* <div className="group relative">
-                <label className="text-[10px] text-gray-400 font-bold ml-2 mb-1 block group-focus-within:text-pink-400 transition-colors uppercase tracking-wider">ที่อยู่</label>
-                <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-pink-400 transition-colors"><Icons.Map /></div>
-                    <input type="text" name="address" required value={formData.address} onChange={handleChange}
-                        className="w-full bg-slate-900/50 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500 transition-all placeholder-gray-600"
-                        placeholder="บ้านเลขที่, ถนน, ตำบล..."
-                    />
-                </div>
-            </div>
-            */}
-
-            {/* Row 4: รหัสผ่าน */}
+            {/* Row 3: รหัสผ่าน */}
             <div className="grid grid-cols-2 gap-3">
                 <div className="group relative">
                     <label className="text-[10px] text-gray-400 font-bold ml-2 mb-1 block group-focus-within:text-purple-400 transition-colors uppercase tracking-wider">รหัสผ่าน</label>

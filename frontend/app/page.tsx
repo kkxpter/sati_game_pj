@@ -1,15 +1,14 @@
 'use client';
+// 👇 เพิ่มบรรทัดนี้ถ้ายังไม่มี (แก้ Error TypeScript)
 /// <reference path="../src/global.d.ts" />
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-// import MatrixBg from '@/components/MatrixBg'; 
 import { playSound } from '@/app/lib/sound';
 
-// 1️⃣ [แก้ Error TypeScript] สร้าง Type สำหรับ User และ Stats
+// 1. เพิ่ม Interface
 interface UserData {
   username: string;
-  // ใส่ field อื่นๆ ถ้ามี เช่น id, email
 }
 
 interface GameStats {
@@ -22,25 +21,21 @@ export default function HomePage() {
   const router = useRouter();
   const [view, setView] = useState<'home' | 'bet'>('home');
   
-  // 2️⃣ [แก้ Error Type 'never'] ระบุ type ชัดเจนว่าจะเป็น UserData หรือ null
+  // 2. เพิ่ม State สำหรับเก็บ User
   const [user, setUser] = useState<UserData | null>(null);
-  
-  // ระบุ type ให้ stats ด้วย
   const [stats, setStats] = useState<GameStats>({ normal: 0, virus: 0, chat: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // 3️⃣ [แก้ Error] รวมการโหลดข้อมูล และใส่คอมเมนต์ข้ามกฎความปลอดภัยชั่วคราว
   useEffect(() => {
-    const loadFromLocalStorage = () => {
+    // 3. โหลดข้อมูล User และ Stats
+    const loadData = () => {
       try {
         const savedStatsStr = localStorage.getItem('cyberStakes_played');
-        // 👇 แก้ตรงนี้ครับ
-        const storedUserStr = localStorage.getItem('user'); 
+        const storedUserStr = localStorage.getItem('user'); // ✅ ใช้ key 'user' ให้ตรงกับหน้า Login
 
         const savedStats = savedStatsStr ? JSON.parse(savedStatsStr) : {};
         const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
 
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStats({ 
           normal: savedStats.normal || 0, 
           virus: savedStats.virus || 0,
@@ -48,35 +43,29 @@ export default function HomePage() {
         });
 
         if (storedUser) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setUser(storedUser);
         }
         
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsLoaded(true);
       } catch (error) {
         console.error("Error loading localStorage:", error);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsLoaded(true); 
       }
     };
-
-    loadFromLocalStorage();
+    loadData();
   }, []);
 
-  // ✅ 2. แก้ไข handleLogout: เปลี่ยน 'santi_user' เป็น 'user'
   const handleLogout = () => {
     playSound('click');
-    // 👇 แก้ตรงนี้ครับ เพื่อให้ลบถูกอัน
-    localStorage.removeItem('user'); 
+    localStorage.removeItem('user'); // ✅ ลบข้อมูล user
     setUser(null);
     router.push('/login');
   };
 
-  // 4️⃣ [แก้ Error Implicit 'any'] ระบุว่า mode เป็น string
   const handleStart = (mode: string) => {
     playSound('click');
 
+    // ✅ 4. เช็คก่อนว่า Login หรือยัง (ถ้ายัง ให้ไปหน้า Login)
     if (!user) {
         router.push('/login');
         return; 
@@ -87,10 +76,12 @@ export default function HomePage() {
     else if (mode === 'chat') router.push('/game/chat');
   };
 
-  // 5️⃣ [แก้ Error Implicit 'any'] ระบุว่า diff เป็น string
   const selectDifficulty = (diff: string) => {
     playSound('click');
-    router.push(`/game/quiz?diff=${diff}`); 
+    
+    // ✅ 5. ใช้ window.location.href เพื่อแก้ปัญหาหน้าค้าง
+    console.log('Navigating to:', `/game/quiz?diff=${diff}`);
+    window.location.href = `/game/quiz?diff=${diff}`;
   };
 
   return (
@@ -104,7 +95,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
       </div>
 
-      {/* ==================== 👤 User Bar ==================== */}
+      {/* ==================== 👤 User Profile (มุมขวาบน) ==================== */}
       {isLoaded && (
           <div className="absolute top-4 right-4 z-50 animate-fade-in">
             {user ? (
@@ -134,9 +125,11 @@ export default function HomePage() {
 
       {/* --- VIEW 1: HOME MENU --- */}
       {view === 'home' && (
-        <div className="relative w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden">
+        <div className="relative w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden group/card">
           
-          {/* Logo Section */}
+          <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
+          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
+
           <div className="flex flex-col items-center mb-8 relative">
             <div className="relative w-24 h-24 mb-4">
                <div className="absolute inset-0 rounded-full border-2 border-purple-500/30 animate-spin-slow"></div>
@@ -152,11 +145,11 @@ export default function HomePage() {
             <p className="text-xs text-gray-300 mt-2 font-bold tracking-widest opacity-80">โตไปไม่โดนหลอก 🤪</p>
           </div>
 
-          {/* Menu Buttons */}
           <div className="flex flex-col gap-3 relative z-10">
             
-            {/* 1. Quiz Mode */}
+            {/* Quiz Mode */}
             <button onClick={() => handleStart('normal')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-green-400/50 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]'}`}>
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="flex items-center gap-4 relative z-10">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-green-500/20 border border-green-500/30 text-green-300 group-hover:scale-110'}`}>
                    {!user ? '🔒' : '🧠'}
@@ -165,15 +158,17 @@ export default function HomePage() {
                   <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-green-300'}`}>
                     ตอบคำถามวัดกึ๋น
                   </div>
-                  <div className="text-[10px] text-gray-400 flex items-center gap-1">
+                  <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
                     {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-green-400 font-bold">{stats.normal} รอบ</span></span>}
                   </div>
                 </div>
+                <div className="text-green-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
               </div>
             </button>
 
-            {/* 2. Virus Mode */}
+            {/* Virus Mode */}
             <button onClick={() => handleStart('virus')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-red-400/50 hover:shadow-[0_0_20px_rgba(248,113,113,0.2)]'}`}>
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="flex items-center gap-4 relative z-10">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-red-500/20 border border-red-500/30 text-red-300 group-hover:scale-110'}`}>
                    {!user ? '🔒' : '🔨'}
@@ -182,15 +177,17 @@ export default function HomePage() {
                   <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-red-300'}`}>
                     ทุบไวรัสวัดนิ้ว
                   </div>
-                  <div className="text-[10px] text-gray-400 flex items-center gap-1">
-                  {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>โหมดแอคชั่น: <span className="text-red-400 font-bold">มันส์มาก!</span></span>}
+                  <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
+                    {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>โหมดแอคชั่น: <span className="text-red-400 font-bold">มันส์มาก!</span></span>}
                   </div>
                 </div>
+                <div className="text-red-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
               </div>
             </button>
 
-            {/* 3. Chat Mode */}
+            {/* Chat Mode */}
             <button onClick={() => handleStart('chat')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(96,165,250,0.2)]'}`}>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="flex items-center gap-4 relative z-10">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-blue-500/20 border border-blue-500/30 text-blue-300 group-hover:scale-110'}`}>
                    {!user ? '🔒' : '💬'}
@@ -199,10 +196,11 @@ export default function HomePage() {
                   <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-blue-300'}`}>
                     แชทปั่นแก๊งคอล
                   </div>
-                  <div className="text-[10px] text-gray-400 flex items-center gap-1">
-                  {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-blue-400 font-bold">{stats.chat} รอบ</span></span>}
+                  <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
+                    {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-blue-400 font-bold">{stats.chat} รอบ</span></span>}
                   </div>
                 </div>
+                <div className="text-blue-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
               </div>
             </button>
 
@@ -219,32 +217,44 @@ export default function HomePage() {
           </div>
           
           <div className="flex flex-col gap-4">
-             <button onClick={() => selectDifficulty('easy')} className="relative group w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-green-900/20 hover:border-green-400/30 transition-all duration-300">
+             {/* Easy */}
+             <button onClick={() => selectDifficulty('easy')} className="relative group w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-green-900/20 hover:border-green-400/30 transition-all duration-300 overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
                 <div className="flex items-center gap-4">
                     <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-90 group-hover:scale-110">👶</span>
                     <div className="text-left">
                         <div className="font-bold text-white text-lg group-hover:text-green-300 transition-colors">อนุบาลหัดเดิน</div>
-                        <div className="text-[10px] text-gray-400">เวลา 20 วิ • ชิลๆ เหมือนเดินห้าง</div>
+                        <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">
+                            เวลา 20 วิ • ชิลๆ เหมือนเดินห้าง
+                        </div>
                     </div>
                 </div>
              </button>
 
-             <button onClick={() => selectDifficulty('medium')} className="relative group w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-yellow-900/20 hover:border-yellow-400/30 transition-all duration-300">
+             {/* Normal */}
+             <button onClick={() => selectDifficulty('medium')} className="relative group w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-yellow-900/20 hover:border-yellow-400/30 transition-all duration-300 overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-yellow-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
                 <div className="flex items-center gap-4">
                     <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-90 group-hover:scale-110">🧑‍🦱</span>
                     <div className="text-left">
                         <div className="font-bold text-white text-lg group-hover:text-yellow-300 transition-colors">มนุษย์เดินดิน</div>
-                        <div className="text-[10px] text-gray-400">เวลา 15 วิ • เริ่มตึงนิดๆ</div>
+                        <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">
+                            เวลา 15 วิ • เริ่มตึงนิดๆ
+                        </div>
                     </div>
                 </div>
              </button>
 
-             <button onClick={() => selectDifficulty('hard')} className="relative group w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-red-900/20 hover:border-red-400/30 transition-all duration-300">
+             {/* Hard */}
+             <button onClick={() => selectDifficulty('hard')} className="relative group w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-red-900/20 hover:border-red-400/30 transition-all duration-300 overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
                 <div className="flex items-center gap-4">
                     <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-90 group-hover:scale-110 animate-pulse">⚡</span>
                     <div className="text-left">
                         <div className="font-bold text-white text-lg group-hover:text-red-300 transition-colors">เทพเจ้าสายฟ้า</div>
-                        <div className="text-[10px] text-gray-400">เวลา 10 วิ • กระพริบตาคือตุย</div>
+                        <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">
+                            เวลา 10 วิ • กระพริบตาคือตุย
+                        </div>
                     </div>
                 </div>
              </button>

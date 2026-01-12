@@ -1,59 +1,43 @@
-// routes/questions.js (แบบแก้ปัญหา pool.promise)
+// routes/questions.js
 import express from 'express';
 
 export default function (pool) {
     const router = express.Router();
 
     router.get('/', (req, res) => {
-        const diff = req.query.diff || 'easy';
+        const { level } = req.query;
 
-        // 1. ดึงคำถาม
-        const sqlQuestion = `
-            SELECT q.*, c.name AS category_name 
-            FROM questions q
-            LEFT JOIN category c ON q.cg_id = c.cg_id
-            WHERE q.level = ? 
-            ORDER BY RAND() 
-            LIMIT 10
-        `;
+        if (!level) {
+            return res.status(400).json({ error: 'กรุณาระบุระดับความยาก (level)' });
+        }
 
-        pool.query(sqlQuestion, [diff], (err, questions) => {
-            if (err) {
-                console.error("DB Error (Questions):", err);
-                return res.status(500).json({ error: err.message });
+        // ✅ แก้ตรงนี้: เปลี่ยน LIMIT 5 เป็น LIMIT 10
+        // ORDER BY RAND() จะทำการสุ่มแถวให้เอง และเมื่อเราดึงมาทีเดียว 10 แถว มันจะไม่ซ้ำกันแน่นอนในรอบนั้น
+        const sqlQuestions = `SELECT * FROM questions WHERE level = ? ORDER BY RAND() LIMIT 10`;
+        
+        pool.query(sqlQuestions, [level], (err, questions) => {
+            if (err) return res.status(500).json({ error: err.message });
+            
+            // ถ้าคำถามใน Database มีไม่ถึง 10 ข้อ มันจะส่งมาเท่าที่มีครับ
+            if (questions.length === 0) {
+                return res.json({ success: true, questions: [] });
             }
 
-            if (questions.length === 0) return res.json([]);
-
-            // 2. ดึงตัวเลือก
             const questionIds = questions.map(q => q.qid);
-            const sqlChoices = `SELECT * FROM choices WHERE qid IN (?)`;
+            const sqlChoices = `SELECT * FROM choices WHERE qid IN (?) ORDER BY RAND()`;
 
-            pool.query(sqlChoices, [questionIds], (err2, choices) => {
-                if (err2) {
-                    console.error("DB Error (Choices):", err2);
-                    return res.status(500).json({ error: err2.message });
-                }
+            pool.query(sqlChoices, [questionIds], (err, choices) => {
+                if (err) return res.status(500).json({ error: err.message });
 
-                // 3. รวมร่าง
-                const gameData = questions.map(q => {
-                    const myChoices = choices.filter(c => c.qid === q.qid);
-                    return {
-                        qid: q.qid,
-                        q: q.name,
-                        desc: q.explanation,
-                        category_name: q.category_name || 'ทั่วไป',
-                        optionsRaw: myChoices.map(c => ({
-                            text: c.name,
-                            isCorrect: c.is_correct === 1
-                        }))
-                    };
-                });
+                const data = questions.map(q => ({
+                    ...q,
+                    choices: choices.filter(c => c.qid === q.qid)
+                }));
 
-                res.json(gameData);
+                res.json({ success: true, questions: data });
             });
         });
     });
 
     return router;
-};
+}

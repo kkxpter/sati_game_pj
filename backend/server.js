@@ -1,26 +1,25 @@
-// server.js ...
+// server.js
 import express from 'express';
 import cors from 'cors';
 import { createPool } from 'mysql2';
-import bcrypt from 'bcrypt'; // ต้อง import ถ้ามีการใช้ใน server แต่ปกติใช้ใน route
+// import bcrypt from 'bcrypt'; // ไม่ได้ใช้ในไฟล์นี้ ลบออกได้ครับจะได้ไม่หนัก
 
-// Import Route ที่เราจะแก้
 import authRoute from './routes/auth.js';
-import questionRoute from './routes/questions.js'; // สมมติว่ามีไฟล์นี้ด้วย
+import questionRoute from './routes/questions.js';
 
 const app = express();
-const port = 4000; // ใช้ Port 4000 ตามที่คุณเคยตั้ง
+const port = 4000; // ✅ Server รันที่ Port 4000
 
 app.use(cors());
 app.use(express.json());
 
-// 1. สร้าง Pool ที่นี่ (ใช้ค่า Config เดิมของคุณ)
+// 1. สร้าง Pool เชื่อมต่อ Database
 const pool = createPool({
-  host: 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com',
-  PORT:"4000",
-  user: '3J3R4CVkCymAtX5.root',
-  password: 'XIEOhSrELG3xvkRA',
-  database: 'sati_game',
+  host: 'gateway01.eu-central-1.prod.aws.tidbcloud.com',
+  port: 4000,                       // 🔴 แก้เป็น port (ตัวเล็ก) และใส่เป็นตัวเลข 4000
+  user: '2yDQVMebVCe2FT7.root',
+  password: '28sLilMqjv5V76JS',     // (รหัสผ่านนี้ถ้าเปลี่ยนใหม่แล้ว อย่าลืมแก้ให้ตรงนะครับ)
+  database: 'SATI_game_pj',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -30,21 +29,17 @@ const pool = createPool({
   }
 });
 
-console.log('✅ Connected to database (via pool)');
+console.log('✅ Connecting to TiDB Cloud...');
 
-// 2. เรียกใช้ Route โดยส่ง pool เข้าไป
-// สังเกตว่า authRoute มันจะเป็นฟังก์ชันรับค่า pool
-app.use('/', authRoute(pool)); 
-app.use('/questions', questionRoute(pool));
+// 2. เรียกใช้ Route
+app.use('/', authRoute(pool));          // เส้นทางสำหรับ Login/Register
+app.use('/questions', questionRoute(pool)); // เส้นทางสำหรับดึงคำถาม
 
-// ... โค้ดส่วนบนเหมือนเดิม ...
-
-// app.listen เดิม ให้ครอบด้วยเงื่อนไขนี้ (เพื่อให้รันในเครื่องได้เหมือนเดิม)
+// เงื่อนไขสำหรับรัน Local vs Vercel
 if (process.env.NODE_ENV !== 'production') {
   app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
+    console.log(`🚀 Server running on http://localhost:${port}`);
   });
 }
 
-// สิ่งที่ต้องเพิ่ม: Export app เพื่อให้ Vercel เอาไปทำเป็น Serverless Function
 export default app;

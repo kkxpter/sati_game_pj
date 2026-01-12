@@ -60,7 +60,7 @@ export default function (pool) {
                const match = await bcrypt.compare(password, user.password);
                if (match) {
                    // ✅ เพิ่ม phone เข้าไปใน response ด้วยก็ได้ เผื่อเอาไปโชว์หน้าเว็บ
-                   res.json({ success: true, user: { id: user.id, username: user.username, email: user.email, phone: user.phone } });
+                   res.json({ success: true, user: { id: user.uid, username: user.username, email: user.email, phone: user.phone } });
                } else {
                    res.status(401).json({ error: "รหัสผ่านไม่ถูกต้อง" });
                }

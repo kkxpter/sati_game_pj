@@ -15,9 +15,16 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
+    // เช็คว่ามี URL Backend หรือยัง
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+        setError('Config Error: ไม่พบ API URL');
+        setIsLoading(false);
+        return;
+    }
+
     try {
-      // ✅ ส่ง Username/Password ไปตรวจที่ Backend
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
+      const res = await fetch(`${apiUrl}/login`, { // <-- ตรวจสอบ Path ว่า Backend ใช้ /login หรือ /auth/login
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -32,11 +39,11 @@ export default function LoginPage() {
         throw new Error(data.error || 'เข้าสู่ระบบไม่สำเร็จ');
       }
 
-      // ✅ [จุดที่แก้] บันทึกข้อมูลลง LocalStorage โดยใช้ key ชื่อ 'user'
-      // เพื่อให้ตรงกับหน้า QuizGame ที่รออ่าน key ชื่อ 'user' อยู่
+      // บันทึก User ลง LocalStorage
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      window.location.href = '/';
+      // ใช้ window.location.href เพื่อ Force Reload หน้าเว็บให้แน่ใจว่า Navbar เห็น user ใหม่
+      window.location.href = '/'; 
 
     } catch (err) {
       setError((err as Error).message);
