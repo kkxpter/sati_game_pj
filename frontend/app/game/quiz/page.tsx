@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react'; // ✅ เพิ่ม Suspense
 import { useRouter, useSearchParams } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
 import Link from 'next/link';
@@ -60,7 +60,8 @@ const RANK_SYSTEM = [
     { percent: 0,   icon: "🍼", title: "เบบี้", desc: "กลับไปดื่มนมก่อนลูก", color: "text-gray-400", border: "border-gray-500", bg: "from-gray-500/20" },
 ];
 
-export default function QuizPage() {
+// ✅ 1. เปลี่ยนชื่อ Component หลักเดิม เป็น QuizContent (เนื้อหาข้างในเหมือนเดิมเป๊ะ)
+function QuizContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const diff = searchParams.get('diff') || 'easy';
@@ -214,7 +215,7 @@ export default function QuizPage() {
     </div>
   );
 
-  // --- RENDER: Finished (หน้าสรุปผล - แบบ Wide Dashboard) ---
+  // --- RENDER: Finished ---
   if (gameState === 'finished') {
       const totalPossibleScore = questions.length * (config.score + 10);
       const scorePercentage = totalPossibleScore > 0 ? (score / totalPossibleScore) * 100 : 0;
@@ -225,7 +226,6 @@ export default function QuizPage() {
         <main className="relative min-h-screen w-screen overflow-hidden bg-slate-900 font-sans flex flex-col items-center justify-center p-4">
             <div className="absolute inset-0 z-0 pointer-events-none"><div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black"></div><div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse-slow"></div><div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div></div>
 
-            {/* ✅ WIDE MAIN CONTAINER (max-w-5xl) */}
             <div className="relative z-10 w-full max-w-5xl bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 text-center shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-fade-in flex flex-col gap-8">
                 
                 {/* Header */}
@@ -271,7 +271,7 @@ export default function QuizPage() {
                             </div>
                         </div>
 
-                        {/* Leaderboard (Compact) */}
+                        {/* Leaderboard */}
                         <div className="bg-white/5 rounded-2xl p-4 border border-white/5 flex-1 flex flex-col">
                             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center justify-center gap-2">
                                 🏆 อันดับผู้เล่น
@@ -291,7 +291,6 @@ export default function QuizPage() {
                     </div>
                 </div>
 
-                {/* Footer Buttons */}
                 <div className="flex flex-row gap-4 justify-center mt-2">
                      <button onClick={() => window.location.reload()} className="px-8 py-3 rounded-xl bg-white/10 border border-white/10 text-white font-bold uppercase tracking-widest hover:bg-white/20 transition-all flex-1 shadow-lg active:scale-95">
                         🔄 เล่นอีกครั้ง
@@ -314,13 +313,9 @@ export default function QuizPage() {
 
   return (
     <main className="relative min-h-screen w-screen overflow-hidden bg-slate-900 font-sans flex flex-col items-center justify-center p-4">
-        {/* Background */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none"><div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black"></div><div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse-slow"></div><div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div></div>
 
-        {/* ✅ MAIN FRAME */}
         <div className="relative z-10 w-full max-w-4xl bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-6 md:p-8 shadow-[0_0_60px_rgba(0,0,0,0.4)] flex flex-col gap-6">
-            
-            {/* Header */}
             <div className="flex items-center gap-4 w-full">
                 <button 
                     onClick={() => router.push('/')}
@@ -348,7 +343,6 @@ export default function QuizPage() {
                         <span className="text-2xl font-black text-yellow-400 leading-none">{score}</span>
                     </div>
                     
-                    {/* Question Count */}
                     <div className="flex items-baseline gap-1 bg-black/20 px-3 py-1 rounded-lg border border-white/5 shadow-sm">
                         <span className="text-sm font-bold text-gray-400">ข้อที่</span>
                         <span className="text-2xl font-black text-blue-400 drop-shadow-md">{currentQIndex + 1}</span>
@@ -357,14 +351,12 @@ export default function QuizPage() {
                 </div>
             </div>
 
-            {/* Question Text */}
             <div className="w-full py-6 md:py-10 text-center relative">
                 <h2 className="text-2xl md:text-3xl font-black text-white leading-relaxed drop-shadow-md animate-fade-in">
                     {currentQuestion.name}
                 </h2>
             </div>
 
-            {/* Choices Grid */}
             <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
                 {currentQuestion.choices.map((choice, index) => {
                     const letter = ['ก', 'ข', 'ค', 'ง'][index];
@@ -395,30 +387,17 @@ export default function QuizPage() {
             </div>
         </div>
 
-        {/* ================= Feedback Popup ================= */}
+        {/* Feedback Popup */}
         {showFeedback && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
-                <div className={`
-                    w-full max-w-md p-6 rounded-[2.5rem] shadow-2xl transform scale-100 animate-in zoom-in-95 duration-200 text-center relative overflow-hidden border-4
-                    ${isCorrect ? 'bg-slate-900 border-green-500 shadow-green-500/30' : (isTimeOut ? 'bg-slate-900 border-orange-500 shadow-orange-500/30' : 'bg-slate-900 border-red-500 shadow-red-500/30')}
-                `}>
-                    
+                <div className={`w-full max-w-md p-6 rounded-[2.5rem] shadow-2xl transform scale-100 animate-in zoom-in-95 duration-200 text-center relative overflow-hidden border-4 ${isCorrect ? 'bg-slate-900 border-green-500 shadow-green-500/30' : (isTimeOut ? 'bg-slate-900 border-orange-500 shadow-orange-500/30' : 'bg-slate-900 border-red-500 shadow-red-500/30')}`}>
                     <div className={`absolute top-0 left-0 w-full h-32 opacity-20 bg-gradient-to-b ${isCorrect ? 'from-green-500' : (isTimeOut ? 'from-orange-500' : 'from-red-500')} to-transparent pointer-events-none`}></div>
-
                     <div className="relative z-10 pt-4 flex flex-col items-center gap-4">
-                        
-                        <div className={`
-                            w-24 h-24 rounded-full flex items-center justify-center text-6xl shadow-lg border-4
-                            ${isCorrect ? 'bg-green-500 border-green-300 text-white' : (isTimeOut ? 'bg-orange-500 border-orange-300 text-white' : 'bg-red-500 border-red-300 text-white')}
-                        `}>
+                        <div className={`w-24 h-24 rounded-full flex items-center justify-center text-6xl shadow-lg border-4 ${isCorrect ? 'bg-green-500 border-green-300 text-white' : (isTimeOut ? 'bg-orange-500 border-orange-300 text-white' : 'bg-red-500 border-red-300 text-white')}`}>
                             {isCorrect ? '✓' : (isTimeOut ? '!' : '✕')}
                         </div>
-
                         <div className="flex flex-col items-center">
-                            <h3 className={`text-3xl font-black uppercase mb-2 ${isCorrect ? 'text-green-400' : (isTimeOut ? 'text-orange-400' : 'text-red-400')}`}>
-                                {isTimeOut ? 'หมดเวลา!' : (isCorrect ? 'ถูกต้องครับ!' : 'ตอบผิดครับ!')}
-                            </h3>
-                            
+                            <h3 className={`text-3xl font-black uppercase mb-2 ${isCorrect ? 'text-green-400' : (isTimeOut ? 'text-orange-400' : 'text-red-400')}`}>{isTimeOut ? 'หมดเวลา!' : (isCorrect ? 'ถูกต้องครับ!' : 'ตอบผิดครับ!')}</h3>
                             {isCorrect && (
                                 <div className="bg-white/10 px-6 py-2 rounded-full border border-white/20 flex items-center gap-2 animate-bounce">
                                     <span className="text-yellow-400 font-black text-2xl">+{earnedPoints}</span>
@@ -426,31 +405,29 @@ export default function QuizPage() {
                                 </div>
                             )}
                         </div>
-
                         <div className="w-full bg-black/40 p-5 rounded-2xl border-l-4 border-white/20 text-left mt-2">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="text-lg">💡</span>
-                                <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">คำอธิบาย</span>
-                            </div>
-                            <p className="text-gray-200 text-sm leading-relaxed font-medium">
-                                {currentQuestion.explanation || "ไม่มีคำอธิบายเพิ่มเติม"}
-                            </p>
+                            <div className="flex items-center gap-2 mb-2"><span className="text-lg">💡</span><span className="text-xs text-gray-400 font-bold uppercase tracking-wider">คำอธิบาย</span></div>
+                            <p className="text-gray-200 text-sm leading-relaxed font-medium">{currentQuestion.explanation || "ไม่มีคำอธิบายเพิ่มเติม"}</p>
                         </div>
-
-                        <button 
-                            onClick={nextQuestion}
-                            className={`
-                                w-full py-4 rounded-xl font-bold text-white text-lg uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95 shadow-lg mt-2
-                                ${isCorrect ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-green-500/40' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/40'}
-                            `}
-                        >
-                            {currentQIndex < questions.length - 1 ? 'ข้อต่อไป ➜' : 'ดูผลลัพธ์ 🏆'}
-                        </button>
-
+                        <button onClick={nextQuestion} className={`w-full py-4 rounded-xl font-bold text-white text-lg uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-95 shadow-lg mt-2 ${isCorrect ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-green-500/40' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-blue-500/40'}`}>{currentQIndex < questions.length - 1 ? 'ข้อต่อไป ➜' : 'ดูผลลัพธ์ 🏆'}</button>
                     </div>
                 </div>
             </div>
         )}
     </main>
+  );
+}
+
+// ✅ 2. สร้าง Component หลักมาครอบ เพื่อแก้ Error: useSearchParams() missing suspense
+export default function QuizPage() {
+  return (
+    <Suspense fallback={
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white space-y-4">
+            <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+            <div className="text-xl font-bold animate-pulse tracking-widest">กำลังโหลดข้อมูล...</div>
+        </div>
+    }>
+      <QuizContent />
+    </Suspense>
   );
 }
