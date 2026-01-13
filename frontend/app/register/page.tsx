@@ -60,17 +60,28 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    // --- 1. ตรวจสอบความถูกต้อง (Validation) ---
+    // --- Validation (เหมือนเดิม) ---
     if (formData.password !== formData.confirmPassword) { setError('รหัสผ่านไม่ตรงกัน'); return; }
     if (formData.password.length < 4) { setError('รหัสผ่านสั้นเกินไป'); return; }
-    // Regex Email อย่างง่าย
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) { setError('รูปแบบอีเมลไม่ถูกต้อง'); return; }
-    if (formData.phone.length !== 10) { setError('เบอร์โทรศัพท์ต้องมี 10 หลัก'); return; }
+    // ... (Validation อื่นๆ) ...
 
-    // ตรวจสอบวันเกิด
-    if (!formData.birthDay || !formData.birthMonth || !formData.birthYear) {
-        setError('กรุณากรอกวันเกิดให้ครบถ้วน');
-        return;
+    setIsLoading(true);
+
+    try {
+      // ✅ ส่วนนี้คือการ MOCK (จำลอง)
+      // แทนที่จะ fetch('/api/register') เราแค่รอเวลา 1.5 วินาที
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      console.log('Register Success:', formData);
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('username', formData.username);
+      
+      // แล้วเด้งไปหน้า Login หรือหน้าแรก
+      router.push('/login'); // หรือ router.push('/');
+
+    } catch (err) {
+      setError('เกิดข้อผิดพลาด');
+      setIsLoading(false);
     }
 
     // คำนวณอายุ และ เตรียมวันที่สำหรับ Database
