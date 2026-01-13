@@ -108,7 +108,7 @@ export default function LoginPage() {
         <div className="mt-8 text-center">
           <p className="text-gray-400 text-sm">
             ยังไม่มีบัญชีใช่ไหม?{' '}
-            <Link 
+            <Link     
               href="/register" 
               className="text-purple-400 font-bold hover:text-purple-300 hover:underline transition-all"
             >
