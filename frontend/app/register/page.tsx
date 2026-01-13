@@ -54,7 +54,7 @@ export default function RegisterPage() {
     if (e.key === 'Backspace' && (e.target as HTMLInputElement).value === '') {
         prevRef.current?.focus();
     }
-  };
+};
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
