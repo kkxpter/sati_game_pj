@@ -1,4 +1,5 @@
 'use client';
+// 👇 แก้ path ให้ตรงกับที่ไฟล์ global.d.ts อยู่จริงในเครื่องคุณ (บางทีอาจเป็น ../../src/...)
 /// <reference path="../../src/global.d.ts" />
 
 import { useState, useRef } from 'react';
@@ -22,7 +23,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({ 
     username: '', email: '', password: '', confirmPassword: '', 
     birthDay: '', birthMonth: '', birthYear: '',
-    phone: '', address: '' // address ใส่เผื่อไว้ (ถ้าใน UI ไม่เปิดก็จะเป็นค่าว่าง)
+    phone: '', address: '' 
   });
   const [error, setError] = useState('');
 
@@ -54,39 +55,27 @@ export default function RegisterPage() {
     if (e.key === 'Backspace' && (e.target as HTMLInputElement).value === '') {
         prevRef.current?.focus();
     }
-};
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // --- Validation (เหมือนเดิม) ---
+    // --- Validation ---
     if (formData.password !== formData.confirmPassword) { setError('รหัสผ่านไม่ตรงกัน'); return; }
     if (formData.password.length < 4) { setError('รหัสผ่านสั้นเกินไป'); return; }
-    // ... (Validation อื่นๆ) ...
 
-    setIsLoading(true);
-
-    try {
-      // ✅ ส่วนนี้คือการ MOCK (จำลอง)
-      // แทนที่จะ fetch('/api/register') เราแค่รอเวลา 1.5 วินาที
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      console.log('Register Success:', formData);
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('username', formData.username);
-      
-      // แล้วเด้งไปหน้า Login หรือหน้าแรก
-      router.push('/login'); // หรือ router.push('/');
-
-    } catch (err) {
-      setError('เกิดข้อผิดพลาด');
-      setIsLoading(false);
+    // --- Date Validation & Formatting ---
+    // ตรวจสอบว่ากรอกครบไหม
+    if (!formData.birthDay || !formData.birthMonth || !formData.birthYear) {
+        setError('กรุณากรอกวันเดือนปีเกิดให้ครบ');
+        return;
     }
 
-    // คำนวณอายุ และ เตรียมวันที่สำหรับ Database
     const yearBE = parseInt(formData.birthYear);
     const yearAD = yearBE - 543; // แปลง พ.ศ. เป็น ค.ศ.
+    
+    // สร้าง Date Object เพื่อเช็กอายุ
     const birthDateObj = new Date(yearAD, parseInt(formData.birthMonth) - 1, parseInt(formData.birthDay));
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -103,16 +92,17 @@ export default function RegisterPage() {
     }
 
     if (age < 10) { setError('ขออภัย ผู้ใช้งานต้องมีอายุ 10 ปีขึ้นไป'); return; }
-    
-    // --- 2. ส่งข้อมูลไป Backend (ของจริง) ---
+
+    // --- Sending to Backend ---
     setIsLoading(true);
 
     try {
-      // เตรียมรูปแบบวันที่ YYYY-MM-DD
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+      // จัดฟอร์แมตวันที่ให้เป็น YYYY-MM-DD (ISO Format) เพื่อส่งให้ Database
       const formattedBirthDate = `${yearAD}-${formData.birthMonth.padStart(2, '0')}-${formData.birthDay.padStart(2, '0')}`;
 
-      // ✅ ยิง API ไปที่ Backend
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/register`, {
+      const res = await fetch(`${apiUrl}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -120,8 +110,8 @@ export default function RegisterPage() {
             password: formData.password,
             email: formData.email,
             phone: formData.phone,
-            birthdate: formattedBirthDate,
-            address: formData.address || '-' // ถ้าไม่มีที่อยู่ให้ใส่ขีด หรือส่งค่าว่าง
+            birthdate: formattedBirthDate, // ✅ ส่งแบบ Date String
+            address: formData.address || '-' // ถ้าว่างส่งขีด
         })
       });
 
@@ -130,18 +120,23 @@ export default function RegisterPage() {
       if (!res.ok) {
         throw new Error(data.error || 'สมัครสมาชิกไม่สำเร็จ');
       }
-      
-      // สมัครผ่านแล้ว
+
+      // ✅ สมัครสำเร็จ -> ไปหน้า Login
       alert('สมัครสมาชิกเรียบร้อย! กรุณาเข้าสู่ระบบ');
       router.push('/login');
 
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err: unknown) { // ✅ เปลี่ยนเป็น unknown
+  console.error("Register Error:", err);
+
+  if (err instanceof Error) {
+    setError(err.message);
+  } else {
+    setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+  }
+}
   };
   
+  // --- UI ส่วนล่างนี้เหมือนเดิม 100% ---
   return (
     <main className="relative w-screen h-screen flex flex-col items-center justify-center p-4 bg-slate-900 font-sans overflow-hidden">
       

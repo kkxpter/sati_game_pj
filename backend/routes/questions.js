@@ -1,42 +1,40 @@
 // routes/questions.js
 import express from 'express';
 
-export default function (pool) {
+export default function (prisma) {
     const router = express.Router();
 
-    router.get('/', (req, res) => {
+    router.get('/', async (req, res) => {
         const { level } = req.query;
 
         if (!level) {
             return res.status(400).json({ error: 'กรุณาระบุระดับความยาก (level)' });
         }
 
-        // ✅ แก้ตรงนี้: เปลี่ยน LIMIT 5 เป็น LIMIT 10
-        // ORDER BY RAND() จะทำการสุ่มแถวให้เอง และเมื่อเราดึงมาทีเดียว 10 แถว มันจะไม่ซ้ำกันแน่นอนในรอบนั้น
-        const sqlQuestions = `SELECT * FROM questions WHERE level = ? ORDER BY RAND() LIMIT 10`;
-        
-        pool.query(sqlQuestions, [level], (err, questions) => {
-            if (err) return res.status(500).json({ error: err.message });
-            
-            // ถ้าคำถามใน Database มีไม่ถึง 10 ข้อ มันจะส่งมาเท่าที่มีครับ
-            if (questions.length === 0) {
+        try {
+            // 1. ดึงคำถามทั้งหมดใน Level นั้น (พร้อม Choices)
+            // เช็คชื่อ Model: ใน Schema เป็น "Questions" (มี s) -> prisma.questions
+            const allQuestions = await prisma.questions.findMany({
+                where: { level: level },
+                include: { choices: true } 
+            });
+
+            if (allQuestions.length === 0) {
                 return res.json({ success: true, questions: [] });
             }
 
-            const questionIds = questions.map(q => q.qid);
-            const sqlChoices = `SELECT * FROM choices WHERE qid IN (?) ORDER BY RAND()`;
+            // 2. สุ่มลำดับ (Shuffle)
+            const shuffled = allQuestions.sort(() => 0.5 - Math.random());
 
-            pool.query(sqlChoices, [questionIds], (err, choices) => {
-                if (err) return res.status(500).json({ error: err.message });
+            // 3. ตัดมาแค่ 10 ข้อ
+            const selectedQuestions = shuffled.slice(0, 10);
 
-                const data = questions.map(q => ({
-                    ...q,
-                    choices: choices.filter(c => c.qid === q.qid)
-                }));
+            res.json({ success: true, questions: selectedQuestions });
 
-                res.json({ success: true, questions: data });
-            });
-        });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: err.message });
+        }
     });
 
     return router;

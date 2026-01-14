@@ -12,37 +12,14 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // 🔍 LOG 1: เริ่มต้นกดปุ่ม
-    console.log("🚀 เริ่มต้นกระบวนการ Login...");
-    
     setIsLoading(true);
     setError('');
 
-    // เช็คว่ามี URL Backend หรือยัง
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    
-    // 🔍 LOG 2: เช็คค่า Environment Variable
-    console.log("🌐 Checking API URL:", apiUrl);
-
-    if (!apiUrl) {
-        console.error("❌ Error: ไม่พบ NEXT_PUBLIC_API_URL");
-        setError('Config Error: ไม่พบ API URL');
-        setIsLoading(false);
-        return;
-    }
+    // ✅ 1. ดึง URL (ถ้าไม่มีใน .env ให้ใช้ localhost)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
     try {
-      const endpoint = `${apiUrl}/login`;
-      
-      // 🔍 LOG 3: กำลังจะยิง Fetch ไปที่ไหน?
-      console.log(`📤 Sending Request to: ${endpoint}`);
-      console.log("📦 Payload:", { 
-          username: formData.username, 
-          password: '******' // ซ่อนรหัสผ่านใน Log เพื่อความปลอดภัย
-      });
-
-      const res = await fetch(endpoint, {
+      const res = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -51,32 +28,26 @@ export default function LoginPage() {
         })
       });
 
-      // 🔍 LOG 4: สถานะที่ตอบกลับมา (200 = OK, 400/500 = Error)
-      console.log("HTTP Status:", res.status, res.statusText);
-
       const data = await res.json();
-      
-      // 🔍 LOG 5: ข้อมูลจริงที่ Server ส่งกลับมา
-      console.log("📥 Response Data:", data);
 
       if (!res.ok) {
-        console.warn("⚠️ Login Failed Logic:", data.error);
         throw new Error(data.error || 'เข้าสู่ระบบไม่สำเร็จ');
       }
 
-      // บันทึก User ลง LocalStorage
-      console.log("✅ Login Success! Saving to LocalStorage...");
+      // ✅ 2. ถ้าสำเร็จ บันทึก User และไปหน้าแรก
       localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // Force Reload ไปหน้าแรก
       window.location.href = '/'; 
 
-    } catch (err) {
-      // 🔍 LOG 6: จับ Error ทั้งหมดที่เกิดขึ้น
-      console.error("🔥 CATCH ERROR:", err);
-      setError((err as Error).message);
-      setIsLoading(false);
-    }
+    } catch (err: unknown) { // ✅ เปลี่ยน any เป็น unknown หรือลบ Type ออกเลยก็ได้
+  console.error("Login Error:", err);
+  
+  // แปลง err ให้เป็น Error object เพื่อดึง message
+  if (err instanceof Error) {
+    setError(err.message);
+  } else {
+    setError('เชื่อมต่อ Server ไม่ได้');
+  }
+}
   };
 
   return (

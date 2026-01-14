@@ -1,0 +1,87 @@
+// --- 1. ส่วนหัว ---
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  
+  // ใช้ลิงก์ Accelerate (prisma+postgres://...)
+  url       = env("DATABASE_URL")
+  
+  // ใช้ลิงก์ Direct (postgres://...)
+  directUrl = env("DIRECT_URL")
+}
+
+// --- 2. ส่วน Model (ตาราง) --- 
+// (ส่วนข้างล่างนี้เหมือนเดิมครับ ถูกต้องแล้ว)
+
+model User {
+  uid       Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  email     String   @unique
+  phone     String   @unique
+  birthdate DateTime
+  address   String?
+
+  games      Game[]
+  answerLogs AnswerLogs[]
+
+  @@map("user")
+}
+
+model Questions {
+  qid      Int    @id @default(autoincrement())
+  level    String
+  question String
+
+  choices    Choices[]
+  answerLogs AnswerLogs[]
+
+  @@map("questions")
+}
+
+model Choices {
+  cid         Int     @id @default(autoincrement())
+  qid         Int
+  choice_text String
+  is_correct  Boolean
+
+  question   Questions    @relation(fields: [qid], references: [qid], onDelete: Cascade)
+  answerLogs AnswerLogs[]
+
+  @@map("choices")
+}
+
+model Game {
+  gid         Int       @id @default(autoincrement())
+  uid         Int       
+  cg_id       Int?      
+  total_score Int       @default(0)
+  time_taken  Float?    
+  started_at  DateTime  @default(now())
+  finished_at DateTime? 
+
+  user       User         @relation(fields: [uid], references: [uid], onDelete: Cascade)
+  answerLogs AnswerLogs[]
+
+  @@map("game")
+}
+
+model AnswerLogs {
+  al_id       Int      @id @default(autoincrement())
+  gid         Int      
+  uid         Int      
+  qid         Int      
+  cid         Int      
+  is_correct  Boolean
+  answered_at DateTime @default(now())
+
+  game     Game      @relation(fields: [gid], references: [gid], onDelete: Cascade)
+  user     User      @relation(fields: [uid], references: [uid], onDelete: Cascade)
+  question Questions @relation(fields: [qid], references: [qid], onDelete: Cascade)
+  choice   Choices   @relation(fields: [cid], references: [cid], onDelete: Cascade)
+
+  @@map("answer_logs")
+}
