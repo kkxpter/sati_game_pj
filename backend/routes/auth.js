@@ -43,7 +43,7 @@ export default function (prisma) {
             });
 
             // ✅ แก้ตรงนี้: ใน Schema คุณใช้ชื่อ "id" ไม่ใช่ "uid"
-            res.json({ message: "สมัครสมาชิกเรียบร้อย!", userId: newUser.id });
+            res.json({ message: "สมัครสมาชิกเรียบร้อย!", userId: newUser.uid });
 
         } catch (err) {
             console.error(err);
