@@ -11,6 +11,7 @@ import authRoute from './routes/auth.js';
 import questionRoute from './routes/questions.js';
 
 const app = express();
+app.use(cors());
 const prisma = new PrismaClient(); // ✅ สร้างตัวเชื่อมต่อ
 const port = 4000;
 
