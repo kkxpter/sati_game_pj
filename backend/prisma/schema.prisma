@@ -5,16 +5,23 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  
-  // ใช้ลิงก์ Accelerate (prisma+postgres://...)
   url       = env("DATABASE_URL")
-  
-  // ใช้ลิงก์ Direct (postgres://...)
   directUrl = env("DIRECT_URL")
 }
 
-// --- 2. ส่วน Model (ตาราง) --- 
-// (ส่วนข้างล่างนี้เหมือนเดิมครับ ถูกต้องแล้ว)
+// --- 2. ส่วน Model (ตาราง) ---
+
+// ✅ เพิ่มตาราง Category ตามที่ขอ
+model Category {
+  cg_id   Int    @id @default(autoincrement())
+  mode_cg String // ชื่อหมวดหมู่ (เช่น "ความรู้ทั่วไป", "กลโกง")
+
+  // Relation: เอาไว้เชื่อมกับ Game และ Questions
+  games     Game[]
+  questions Questions[]
+
+  @@map("category")
+}
 
 model User {
   uid       Int      @id @default(autoincrement())
@@ -35,6 +42,10 @@ model Questions {
   qid      Int    @id @default(autoincrement())
   level    String
   question String
+  explanation String? @db.Text
+  // ✅ เพิ่ม: เชื่อมกับ Category (เพื่อให้รู้ว่าคำถามนี้อยู่หมวดไหน)
+  cg_id    Int?   
+  category Category? @relation(fields: [cg_id], references: [cg_id])
 
   choices    Choices[]
   answerLogs AnswerLogs[]
@@ -57,13 +68,17 @@ model Choices {
 model Game {
   gid         Int       @id @default(autoincrement())
   uid         Int       
+  
+  // ✅ แก้ไข: เชื่อมกับ Category (เพื่อให้รู้ว่าเกมนี้เล่นหมวดไหน)
   cg_id       Int?      
+  category    Category? @relation(fields: [cg_id], references: [cg_id])
+
   total_score Int       @default(0)
   time_taken  Float?    
   started_at  DateTime  @default(now())
   finished_at DateTime? 
 
-  user       User         @relation(fields: [uid], references: [uid], onDelete: Cascade)
+  user       User       @relation(fields: [uid], references: [uid], onDelete: Cascade)
   answerLogs AnswerLogs[]
 
   @@map("game")
