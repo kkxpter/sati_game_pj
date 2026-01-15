@@ -271,3 +271,19 @@ input:-webkit-autofill:active {
     /* ปรับขอบมนให้เท่ากับ input เดิม */
     border-radius: 0.75rem; 
 }
+/* ต่อท้ายไฟล์ globals.css */
+
+@keyframes scrollLeft {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll-bg {
+  /* เปลี่ยนจาก 60s เป็น 120s หรือ 180s (ยิ่งเลขเยอะ ยิ่งช้า) */
+  animation: scrollLeft 120s linear infinite; 
+  display: flex;
+}
