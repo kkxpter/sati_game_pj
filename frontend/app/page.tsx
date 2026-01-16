@@ -2,7 +2,7 @@
 // 👇 เพิ่มบรรทัดนี้ถ้ายังไม่มี (แก้ Error TypeScript)
 /// <reference path="../src/global.d.ts" />
 
-import { useState, useEffect , useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
 import Image from 'next/image';
@@ -21,9 +21,12 @@ interface GameStats {
 export default function HomePage() {
   const router = useRouter();
   const [view, setView] = useState<'home' | 'bet'>('home');
+  
+  // Audio Ref
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // State
   const [isMuted, setIsMuted] = useState(false);
-  // 2. เพิ่ม State สำหรับเก็บ User
   const [user, setUser] = useState<UserData | null>(null);
   const [stats, setStats] = useState<GameStats>({ normal: 0, virus: 0, chat: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
@@ -33,67 +36,76 @@ export default function HomePage() {
     setIsMuted(newMutedStatus);
     
     if (audioRef.current) {
-      audioRef.current.muted = newMutedStatus; // สั่งให้เครื่องเล่นเพลงเงียบหรือดัง
+      audioRef.current.muted = newMutedStatus; 
     }
-    // บันทึกลงเครื่องเพื่อให้หน้า Quiz ดึงไปใช้ต่อได้
     localStorage.setItem('isMuted', JSON.stringify(newMutedStatus)); 
   };
 
   useEffect(() => {
-    // 3. โหลดข้อมูล User และ Stats
-    const loadData = () => {
-      try {
-        const savedStatsStr = localStorage.getItem('cyberStakes_played');
-        const storedUserStr = localStorage.getItem('user'); 
+    // ✅ ใช้ setTimeout เพื่อแก้ Error: Calling setState synchronously
+    const timer = setTimeout(() => {
+        // 1. โหลดข้อมูล User และ Stats
+        try {
+            const savedStatsStr = localStorage.getItem('cyberStakes_played');
+            const storedUserStr = localStorage.getItem('user'); 
 
-        const savedStats = savedStatsStr ? JSON.parse(savedStatsStr) : {};
-        const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
+            const savedStats = savedStatsStr ? JSON.parse(savedStatsStr) : {};
+            const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
 
-        setStats({ 
-          normal: savedStats.normal || 0, 
-          virus: savedStats.virus || 0,
-          chat: savedStats.chat || 0 
-        });
+            setStats({ 
+                normal: savedStats.normal || 0, 
+                virus: savedStats.virus || 0,
+                chat: savedStats.chat || 0 
+            });
 
-        if (storedUser) {
-          setUser(storedUser);
+            if (storedUser) {
+                setUser(storedUser);
+            }
+            
+            setIsLoaded(true);
+        } catch (error) {
+            console.error("Error loading localStorage:", error);
+            setIsLoaded(true); 
         }
+
+        // 2. Setup Audio & Mute Status
+        const audio = new Audio('/sounds/main_bgm.wav'); 
+        audio.loop = true;   
+        audio.volume = 0.4;  
+        audioRef.current = audio;
+
+        const savedMute = localStorage.getItem('isMuted');
+        if (savedMute !== null) {
+            const initialMuted = JSON.parse(savedMute);
+            setIsMuted(initialMuted);
+            audio.muted = initialMuted;
+        }
+
+        const playBgm = () => {
+            if (audio.paused) {
+                audio.play().catch(() => {
+                    console.log("Autoplay blocked, waiting for interaction");
+                });
+            }
+        };
+
+        playBgm();
         
-        setIsLoaded(true);
-      } catch (error) {
-        console.error("Error loading localStorage:", error);
-        setIsLoaded(true); 
-      }
-    };
-    loadData();
-    const audio = new Audio('/sounds/main_bgm.wav'); 
-    audio.loop = true;   // วนลูป
-    audio.volume = 0.4;  // ระดับเสียง
-    audioRef.current = audio;
+        const handleInteraction = () => {
+            playBgm();
+            window.removeEventListener('click', handleInteraction);
+        };
+        window.addEventListener('click', handleInteraction);
 
-    const playBgm = () => {
-      audio.play().catch(() => {
-        console.log("Autoplay blocked, waiting for click");
-      });
-    };
-
-    const savedMute = localStorage.getItem('isMuted');
-    const initialMuted = savedMute !== null ? JSON.parse(savedMute) : false;
-
-    playBgm(); // พยายามเล่นทันที
-
-    // แก้ปัญหา Browser บล็อกเสียง: ให้เริ่มเล่นเมื่อคลิกส่วนไหนก็ได้ในครั้งแรก
-    window.addEventListener('click', playBgm, { once: true });
-
-    // ✅ 3. เพิ่มฟังก์ชันนี้ก่อนถึงบรรทัด return (JSX)
+    }, 0);
 
     return () => {
-      audio.pause();
-      window.removeEventListener('click', playBgm);
+        clearTimeout(timer);
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+        }
     };
-
-    
-
   }, []);
 
   const handleLogout = () => {
@@ -118,6 +130,7 @@ export default function HomePage() {
 
   const selectDifficulty = (diff: string) => {
     playSound('click');
+    // ✅ แก้ Path ให้ตรงกับโครงสร้างจริงของคุณ
     console.log('Navigating to:', `/game/quiz?diff=${diff}`);
     window.location.href = `/game/quiz?diff=${diff}`;
   };
@@ -145,9 +158,11 @@ export default function HomePage() {
           <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
       </div>
 
-      {/* ==================== 👤 User Profile (มุมขวาบน) ==================== */}
+      {/* ==================== 👤 User Profile & Leaderboard (มุมขวาบน) ==================== */}
       {isLoaded && (
-          <div className="absolute top-4 right-4 z-50 animate-fade-in">
+          <div className="absolute top-4 right-4 z-50 animate-fade-in flex flex-col items-end gap-2">
+            
+            {/* 1. ส่วน User Profile + Logout */}
             {user ? (
               <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white shadow-inner">
@@ -170,6 +185,16 @@ export default function HomePage() {
                 <span className="h-4 w-4 animate-pulse inline-flex items-center justify-center">➡️</span>
               </button>
             )}
+
+            {/* ✅ 2. ปุ่ม Leaderboard (แก้ Path ให้ตรง: /game/leaderboard) */}
+            <button 
+                onClick={() => { playSound('click'); router.push('/game/leaderboard'); }} 
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-500/20 backdrop-blur-md rounded-full border border-yellow-500/40 text-yellow-200 hover:bg-yellow-500/30 hover:text-white transition-all text-xs font-bold shadow-lg group"
+            >
+                <span className="text-lg group-hover:scale-110 transition-transform">🏆</span>
+                <span>ดูอันดับคะแนน</span>
+            </button>
+
           </div>
       )}
 
@@ -180,9 +205,8 @@ export default function HomePage() {
           <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
           <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
 
-          <div className="flex flex-col items-center mb-2 relative">
+          <div className="flex flex-col items-center mb-1 relative">
             
-            {/* ✅ Mascot: ใช้ -mb-4 เพื่อดึงชื่อขึ้นมาติดกัน, z-10 เพื่อให้บังชื่อนิดๆ */}
             <div className="w-24 h-24 relative -mb-6 z-10 animate-bounce drop-shadow-[0_0_15px_rgba(167,139,250,0.9)]">
                 <Image 
                     src="/images/mas.png" 
@@ -192,10 +216,6 @@ export default function HomePage() {
                 />
             </div>
             
-
-            {/* ✅ 2. รูปชื่อโปรเจกต์ */}
-            {/* ✅ Project Name: w-[120%] เพื่อขยายให้ล้น Padding ออกมานิดนึง, h-56 ให้ใหญ่สะใจ */}
-
             <div className="relative w-[120%] -ml-4 h-56 drop-shadow-xl pointer-events-none">
                 <Image 
                   src="/images/name_pj.png" 
@@ -306,15 +326,6 @@ export default function HomePage() {
                     </div>
                 </div>
              </button>
-             
-             {/* ✅ 4. เพิ่มปุ่มสลับเสียงไว้ก่อนปิดแท็ก </main> */}
-      {/* <button 
-        onClick={toggleMute}
-        className="absolute top-4 left-4 z-50 p-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-lg hover:scale-110 transition-all"
-        title={isMuted ? "Unmute" : "Mute"}
-      >
-        <span className="text-xl">{isMuted ? '🔇' : '🔊'}</span>
-      </button> */}
 
              {/* Hard */}
              <button onClick={() => selectDifficulty('hard')} className="relative group w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-red-900/20 hover:border-red-400/30 transition-all duration-300 overflow-hidden">
@@ -337,17 +348,16 @@ export default function HomePage() {
           >
             <span>←</span> กลับหน้าหลัก
           </button>
-          
         </div>
       )}
 
+      {/* ✅ ปุ่มเปิด/ปิดเสียง (อยู่ที่เดิม มุมขวาล่าง) */}
       <button 
         onClick={toggleMute}
-        className="absolute bottom-6 right-6 z-50 p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl"
+        className="absolute bottom-6 right-6 z-50 p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl hover:scale-110 transition-transform"
       >
         <span className="text-xl">{isMuted ? '🔇' : '🔊'}</span>
       </button>
     </main>
-
   );
 }
