@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
+import Image from 'next/image';
 
 // 1. เพิ่ม Interface
 interface UserData {
@@ -31,7 +32,7 @@ export default function HomePage() {
     const loadData = () => {
       try {
         const savedStatsStr = localStorage.getItem('cyberStakes_played');
-        const storedUserStr = localStorage.getItem('user'); // ✅ ใช้ key 'user' ให้ตรงกับหน้า Login
+        const storedUserStr = localStorage.getItem('user'); 
 
         const savedStats = savedStatsStr ? JSON.parse(savedStatsStr) : {};
         const storedUser = storedUserStr ? JSON.parse(storedUserStr) : null;
@@ -57,7 +58,7 @@ export default function HomePage() {
 
   const handleLogout = () => {
     playSound('click');
-    localStorage.removeItem('user'); // ✅ ลบข้อมูล user
+    localStorage.removeItem('user');
     setUser(null);
     router.push('/login');
   };
@@ -65,7 +66,6 @@ export default function HomePage() {
   const handleStart = (mode: string) => {
     playSound('click');
 
-    // ✅ 4. เช็คก่อนว่า Login หรือยัง (ถ้ายัง ให้ไปหน้า Login)
     if (!user) {
         router.push('/login');
         return; 
@@ -78,8 +78,6 @@ export default function HomePage() {
 
   const selectDifficulty = (diff: string) => {
     playSound('click');
-    
-    // ✅ 5. ใช้ window.location.href เพื่อแก้ปัญหาหน้าค้าง
     console.log('Navigating to:', `/game/quiz?diff=${diff}`);
     window.location.href = `/game/quiz?diff=${diff}`;
   };
@@ -88,9 +86,8 @@ export default function HomePage() {
     <main className="relative w-screen h-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans">
       
       {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอปลง) ✨ ==================== */}
-      <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950"> {/* ✅ พื้นหลังหลักเป็นสีดำเข้ม */}
+      <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950"> 
           
-          {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง + Grayscale) */}
           <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
               <div 
                   className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
@@ -102,10 +99,8 @@ export default function HomePage() {
               ></div>
           </div>
 
-          {/* 2. Overlay สีดำไล่ระดับ (Gradient) ทับอีกที เพื่อให้ตรงกลางเด่น */}
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
 
-          {/* 3. Effect แสงไฟ */}
           <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
           <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
       </div>
@@ -145,20 +140,27 @@ export default function HomePage() {
           <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
           <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
 
-          <div className="flex flex-col items-center mb-8 relative">
-            <div className="relative w-24 h-24 mb-4">
-               <div className="absolute inset-0 rounded-full border-2 border-purple-500/30 animate-spin-slow"></div>
-               <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-tr from-purple-500/10 to-blue-500/10 rounded-full backdrop-blur-sm shadow-[0_0_30px_rgba(139,92,246,0.3)]">
-                  <span className="text-5xl animate-bounce drop-shadow-[0_0_10px_rgba(167,139,250,0.8)]">👾</span>
-               </div>
+          <div className="flex flex-col items-center mb-6 relative">
+            
+            {/* ✅ 1. รูป Mascot (ไม่มีวงกลมแล้ว) */}
+            <div className="w-32 h-32 relative mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(167,139,250,0.9)]">
+                <Image 
+                    src="/images/mas.png" 
+                    alt="Mascot" 
+                    fill 
+                    className="object-contain" 
+                />
             </div>
             
-            {/* ✅ เปลี่ยนชื่อตรงนี้ */}
-            <h1 className="text-3xl font-black text-white uppercase tracking-wider text-center leading-tight drop-shadow-md">
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">SATI</span><br/>
-              
-            </h1>
-            <p className="text-xs text-gray-300 mt-2 font-bold tracking-widest opacity-80">ดิจิทัลรู้ทันมิจ พิชิตสแกมเมอร์</p>
+            {/* ✅ 2. รูปชื่อโปรเจกต์ */}
+            <div className="relative w-80 h-32 mb-2 drop-shadow-lg">
+                <Image 
+                  src="/images/name_pj.png" 
+                  alt="SATI Project Name" 
+                  fill 
+                  className="object-contain" 
+                />
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 relative z-10">
