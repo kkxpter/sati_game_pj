@@ -97,13 +97,12 @@ export default function VirusPage() {
             currentDisappearRate = 4000;
         } 
         else {
-            // ✅ ปรับอัตราการเกิดของระเบิดให้น้อยลง (Rare)
             if (phase === 3) {
-                if (r > 0.95) type = 'bomb'; // 5% (Phase 3)
-                else if (r < 0.25) type = 'file'; // 25%
+                if (r > 0.95) type = 'bomb';
+                else if (r < 0.25) type = 'file';
             } else {
-                if (r > 0.97) type = 'bomb'; // 3% (Phase 1-2) - นานๆ มาที
-                else if (r < 0.2) type = 'file'; // 20%
+                if (r > 0.97) type = 'bomb';
+                else if (r < 0.2) type = 'file';
             }
         }
 
@@ -168,14 +167,12 @@ export default function VirusPage() {
         setScore(s => s + points);
         setCombo(c => c + 1);
     } else if (type === 'bomb') {
-        // ✅ ระเบิด: Game Over ทันที
         triggerShake(); 
         playSound('wrong');
         newGrid[index] = 'exploding';
-        setHp(0); // เลือดเป็น 0
-        setView('gameover'); // ตัดจบเกม
+        setHp(0);
+        setView('gameover');
     } else if (type === 'file') {
-        // ✅ ไฟล์: เลือดลด 30
         triggerShake(); 
         playSound('wrong');
         newGrid[index] = 'exploding';
@@ -186,7 +183,7 @@ export default function VirusPage() {
         }, 300);
     }
 
-    if (hp <= 0 && type !== 'bomb') setView('gameover'); // Check death for non-bomb causes
+    if (hp <= 0 && type !== 'bomb') setView('gameover');
     setGrid(newGrid);
   };
 
@@ -206,12 +203,27 @@ export default function VirusPage() {
     <div className={`relative h-screen w-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans transition-all ${isShaking ? 'animate-shake' : ''}`}>
        <style>{shakeStyle}</style>
 
-       {/* Background */}
-       <div className="absolute inset-0 z-0 pointer-events-none">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black"></div>
-            <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse-slow mix-blend-screen"></div>
-            <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-pink-600/20 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
+       {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอปลง) ✨ ==================== */}
+       <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
+          
+          {/* 1. รูปภาพเลื่อน */}
+          <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
+              <div 
+                  className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
+                  style={{ backgroundImage: "url('/images/bg1.png')" }} 
+              ></div>
+              <div 
+                  className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
+                  style={{ backgroundImage: "url('/images/bg1.png')" }} 
+              ></div>
+          </div>
+
+          {/* 2. Overlay สีดำไล่ระดับ */}
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
+
+          {/* 3. Effect แสงไฟ */}
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
+          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
        </div>
 
        <button 
@@ -230,7 +242,7 @@ export default function VirusPage() {
 
        {/* --- 1. TUTORIAL SCREEN --- */}
        {view === 'tutorial' && (
-           <div className="relative z-10 w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl text-center animate-fade-in">
+           <div className="relative z-10 w-full max-w-sm bg-black/60 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem] shadow-2xl text-center animate-fade-in">
                <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-6 uppercase tracking-wider">
                    คู่มือปราบไวรัส
                </h1>
@@ -240,12 +252,10 @@ export default function VirusPage() {
                        <div className="w-10 h-10 rounded-lg bg-red-500/20 border border-red-500/50 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(239,68,68,0.3)]">🦠</div>
                        <div className="text-left"><div className="text-white font-bold">ไวรัส</div><div className="text-gray-400 text-[10px]">ต้องรีบกด! หลุดแล้วเลือดลด</div></div>
                    </div>
-                   {/* ✅ แก้ไขคำอธิบายระเบิด */}
                    <div className="flex items-center gap-3 bg-white/5 p-2 rounded-xl border border-white/5">
                        <div className="w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-500/50 flex items-center justify-center text-2xl animate-pulse">💣</div>
                        <div className="text-left"><div className="text-white font-bold">ระเบิด</div><div className="text-red-400 text-[10px] font-bold">ห้ามกดเด็ดขาด! GAME OVER ทันที</div></div>
                    </div>
-                   {/* ✅ แก้ไขคำอธิบายไฟล์ */}
                    <div className="flex items-center gap-3 bg-white/5 p-2 rounded-xl border border-white/5">
                        <div className="w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-500/50 flex items-center justify-center text-2xl">📁</div>
                        <div className="text-left"><div className="text-white font-bold">ไฟล์งาน</div><div className="text-gray-400 text-[10px]">ห้ามกด! เลือดลด -30</div></div>
@@ -273,7 +283,8 @@ export default function VirusPage() {
        {view === 'playing' && (
         <div className="relative z-10 w-full max-w-[380px] flex flex-col gap-4 animate-fade-in">
             
-            <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10 backdrop-blur-xl shadow-lg">
+            {/* ✅ 1. Header Bar: ปรับพื้นหลังให้เข้มขึ้น (bg-black/40) */}
+            <div className="flex justify-between items-center bg-black/40 p-4 rounded-2xl border border-white/10 backdrop-blur-xl shadow-lg">
                 <div>
                     <div className="text-[10px] text-gray-400 tracking-widest font-bold">TIME</div>
                     <div className="text-2xl font-mono text-white">{survivalTime}s</div>
@@ -299,7 +310,8 @@ export default function VirusPage() {
                     <span>SYSTEM HEALTH</span>
                     <span>{hp}/200</span>
                 </div>
-                <div className="w-full bg-white/5 h-6 rounded-full overflow-hidden border border-white/10 shadow-inner relative">
+                {/* ✅ 2. Health Bar Bg: ปรับให้เข้มขึ้น (bg-black/30) */}
+                <div className="w-full bg-black/30 h-6 rounded-full overflow-hidden border border-white/10 shadow-inner relative">
                     <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.2)_1px,transparent_1px)] bg-[size:10%_100%] z-10 pointer-events-none"></div>
                     <div 
                         className={`h-full transition-all duration-300 ${hp < 50 ? 'bg-red-500 shadow-[0_0_20px_red] animate-pulse' : 'bg-gradient-to-r from-green-500 to-emerald-400'}`} 
@@ -308,7 +320,8 @@ export default function VirusPage() {
                 </div>
             </div>
             
-            <div className={`p-4 bg-white/5 backdrop-blur-md rounded-[2rem] border border-white/10 shadow-2xl transition-all duration-500 ${phase === 3 ? 'border-red-500/30 shadow-[0_0_30px_rgba(220,38,38,0.2)]' : ''}`}>
+            {/* ✅ 3. Grid Container: ปรับพื้นหลังให้เข้มขึ้นมาก (bg-black/60) */}
+            <div className={`p-4 bg-black/60 backdrop-blur-md rounded-[2rem] border border-white/10 shadow-2xl transition-all duration-500 ${phase === 3 ? 'border-red-500/30 shadow-[0_0_30px_rgba(220,38,38,0.2)]' : ''}`}>
                 <div className="grid grid-cols-4 gap-2">
                     {grid.map((cell, i) => (
                         <div 
@@ -349,7 +362,7 @@ export default function VirusPage() {
 
        {/* --- 3. GAMEOVER SCREEN --- */}
        {view === 'gameover' && (
-            <div className="relative z-10 bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl animate-fade-in">
+            <div className="relative z-10 bg-black/60 backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl animate-fade-in">
                 <div className="text-8xl mb-4 animate-bounce drop-shadow-xl">💥</div>
                 <h1 className="text-3xl font-black mb-2 uppercase tracking-wide text-red-500 drop-shadow-md">
                     SYSTEM CRASHED

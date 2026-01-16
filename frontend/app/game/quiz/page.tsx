@@ -102,7 +102,20 @@ function QuizContent() {
         const data: ApiResponse = await res.json();
 
         if (data.success && data.questions && data.questions.length > 0) {
-            setQuestions(data.questions);
+            
+            // ✅ เพิ่มตรงนี้: ฟังก์ชันสุ่มตัวเลือก (Shuffle Choices)
+            const shuffledQuestions = data.questions.map((q) => {
+                // สร้าง array ใหม่ของ choices เพื่อนำมาสลับ
+                const choices = [...q.choices];
+                // ใช้สูตร Fisher-Yates Shuffle เพื่อการสุ่มที่ทั่วถึง
+                for (let i = choices.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [choices[i], choices[j]] = [choices[j], choices[i]];
+                }
+                return { ...q, choices };
+            });
+
+            setQuestions(shuffledQuestions); // บันทึกคำถามที่สลับช้อยส์แล้ว
             setGameState('playing');
             setTimeout(() => setIsTimerRunning(true), 0);
             playSound('click'); 
@@ -212,32 +225,43 @@ function QuizContent() {
       const accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
 
       return (
-        <main className="relative min-h-screen w-screen bg-slate-900 font-sans flex flex-col items-center justify-start md:justify-center p-4 overflow-y-auto">
-            {/* Background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black"></div>
-                <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse-slow"></div>
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
+        <main className="relative min-h-screen w-screen bg-slate-950 font-sans flex flex-col items-center justify-start md:justify-center p-4 overflow-y-auto">
+            
+            {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอปลง) ✨ ==================== */}
+            <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
+                
+                {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง + Grayscale) */}
+                <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
+                    <div 
+                        className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
+                        style={{ backgroundImage: "url('/images/bg1.png')" }} 
+                    ></div>
+                    <div 
+                        className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
+                        style={{ backgroundImage: "url('/images/bg1.png')" }} 
+                    ></div>
+                </div>
+
+                {/* 2. Overlay สีดำไล่ระดับ (Gradient) */}
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
+
+                {/* 3. Effect แสงไฟ */}
+                <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
+                <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
             </div>
 
-            {/* ✅ ปรับ max-w-6xl -> max-w-4xl ให้เล็กลง และลด padding */}
+            {/* Content */}
             <div className="relative z-10 w-full max-w-4xl bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-5 md:p-8 text-center shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-fade-in flex flex-col gap-4 md:gap-6 my-4 md:my-0">
                 
                 <h1 className="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 uppercase tracking-widest drop-shadow-lg">
                     MISSION COMPLETE
                 </h1>
                 
-                {/* Grid Layout */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     
-                    {/* LEFT: Personal Result (✅ แก้ให้ทึบแสงและเข้มขึ้น) */}
+                    {/* LEFT: Personal Result */}
                     <div className="flex flex-col gap-4 order-1">
-                        {/* - เปลี่ยนจาก gradient โปร่งแสง เป็น bg-slate-900 (ทึบเข้ม)
-                           - เพิ่ม border-4 ให้ขอบหนาชัดเจน
-                           - ลบ backdrop-blur เพราะพื้นหลังทึบแล้ว
-                        */}
                         <div className={`bg-slate-900 rounded-3xl p-6 border-4 ${myRank.border} relative overflow-hidden shadow-2xl flex flex-col justify-center items-center min-h-[250px]`}>
-                             {/* Gradient ซ้อนข้างในจางๆ ให้ดูมีมิติแต่ไม่บังตัวหนังสือ */}
                              <div className={`absolute inset-0 bg-gradient-to-br ${myRank.bg} to-transparent opacity-20`}></div>
                             
                             <div className="relative z-10 flex flex-col items-center">
@@ -332,12 +356,29 @@ function QuizContent() {
   if (timeLeft <= config.time * 0.2) timerColor = 'bg-red-600 shadow-[0_0_15px_#dc2626] animate-pulse';
 
   return (
-    <main className="relative min-h-screen w-screen overflow-hidden bg-slate-900 font-sans flex flex-col items-center justify-start md:justify-center p-4">
-        {/* BG */}
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black"></div>
-            <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse-slow"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
+    <main className="relative min-h-screen w-screen overflow-hidden bg-slate-950 font-sans flex flex-col items-center justify-start md:justify-center p-4">
+        
+        {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอปลง) ✨ ==================== */}
+        <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
+            
+            {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง + Grayscale) */}
+            <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
+                <div 
+                    className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
+                    style={{ backgroundImage: "url('/images/bg1.png')" }} 
+                ></div>
+                <div 
+                    className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
+                    style={{ backgroundImage: "url('/images/bg1.png')" }} 
+                ></div>
+            </div>
+
+            {/* 2. Overlay สีดำไล่ระดับ (Gradient) */}
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
+
+            {/* 3. Effect แสงไฟ */}
+            <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
+            <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
         </div>
 
         <div className="relative z-10 w-full max-w-4xl bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-4 md:p-8 shadow-[0_0_60px_rgba(0,0,0,0.4)] flex flex-col gap-4 md:gap-6 mt-4 md:mt-0">
@@ -434,9 +475,15 @@ function QuizContent() {
   );
 }
 
+// ✅ Component หลักสำหรับหน้าเว็บ
 export default function QuizPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white space-y-4"><div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div><div className="text-xl font-bold animate-pulse tracking-widest">กำลังโหลดข้อมูล...</div></div>}>
+    <Suspense fallback={
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white space-y-4">
+            <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+            <div className="text-xl font-bold animate-pulse tracking-widest">กำลังโหลดข้อมูล...</div>
+        </div>
+    }>
       <QuizContent />
     </Suspense>
   );

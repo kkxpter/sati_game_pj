@@ -192,11 +192,30 @@ export default function ChatGamePage() {
 
   if (isGameFinished) {
     return (
-        <div className="flex flex-col items-center justify-center h-screen w-screen bg-slate-900 p-4 relative z-50 overflow-hidden font-sans">
-          <div className="absolute inset-0 z-0">
-             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black"></div>
-             {/* ... background animations ... */}
+        <div className="flex flex-col items-center justify-center h-screen w-screen bg-slate-950 p-4 relative z-50 overflow-hidden font-sans">
+          {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอป) ✨ ==================== */}
+          <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
+              
+              {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง + Grayscale) */}
+              <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
+                  <div 
+                      className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
+                      style={{ backgroundImage: "url('/images/bg1.png')" }} 
+                  ></div>
+                  <div 
+                      className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
+                      style={{ backgroundImage: "url('/images/bg1.png')" }} 
+                  ></div>
+              </div>
+
+              {/* 2. Overlay สีดำไล่ระดับ (Gradient) */}
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
+
+              {/* 3. Effect แสงไฟ */}
+              <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
+              <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
           </div>
+
           <div className="relative z-10 bg-white/5 backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl animate-fade-in">
             <div className="text-8xl mb-6 animate-bounce drop-shadow-xl">🎬</div>
             <h1 className="text-4xl font-black text-white mb-4 drop-shadow-md">จบเกม!</h1>
@@ -208,14 +227,29 @@ export default function ChatGamePage() {
   }
 
   return (
-    <div className="relative h-screen w-screen flex justify-center items-center bg-slate-900 overflow-hidden font-sans">
+    <div className="relative h-screen w-screen flex justify-center items-center bg-slate-950 overflow-hidden font-sans">
       
-      {/* Background Layer */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black"></div>
-            <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse-slow mix-blend-screen"></div>
-            <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-pink-600/20 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_80%)]"></div>
+      {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอป) ✨ ==================== */}
+      <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
+          
+          {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง + Grayscale) */}
+          <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
+              <div 
+                  className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
+                  style={{ backgroundImage: "url('/images/bg1.png')" }} 
+              ></div>
+              <div 
+                  className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
+                  style={{ backgroundImage: "url('/images/bg1.png')" }} 
+              ></div>
+          </div>
+
+          {/* 2. Overlay สีดำไล่ระดับ (Gradient) */}
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
+
+          {/* 3. Effect แสงไฟ */}
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
+          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
       </div>
 
       {/* Main Wrapper */}

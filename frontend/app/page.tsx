@@ -88,28 +88,27 @@ export default function HomePage() {
     <main className="relative w-screen h-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans">
       
       {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอปลง) ✨ ==================== */}
-<div className="absolute inset-0 z-0 overflow-hidden bg-slate-950"> {/* ✅ พื้นหลังหลักเป็นสีดำเข้ม */}
-    
-    {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง) */}
-    {/* animate-scroll-bg ใช้เวลา 60s ถ้าอยากช้ากว่านี้ ให้แก้ใน globals.css เป็น 120s */}
-    <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40"> {/* ✅ opacity-40 ทำให้ภาพจางลง */}
-        <div 
-            className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" // ✅ grayscale ทำให้สีหม่นลงหน่อย จะได้ไม่แย่งซีน
-            style={{ backgroundImage: "url('/images/bg1.png')" }} 
-        ></div>
-        <div 
-            className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
-            style={{ backgroundImage: "url('/images/bg1.png')" }} 
-        ></div>
-    </div>
+      <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950"> {/* ✅ พื้นหลังหลักเป็นสีดำเข้ม */}
+          
+          {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง + Grayscale) */}
+          <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
+              <div 
+                  className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
+                  style={{ backgroundImage: "url('/images/bg1.png')" }} 
+              ></div>
+              <div 
+                  className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
+                  style={{ backgroundImage: "url('/images/bg1.png')" }} 
+              ></div>
+          </div>
 
-    {/* 2. Overlay สีดำไล่ระดับ (Gradient) ทับอีกที เพื่อให้ตรงกลางเด่น */}
-    <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
+          {/* 2. Overlay สีดำไล่ระดับ (Gradient) ทับอีกที เพื่อให้ตรงกลางเด่น */}
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
 
-    {/* 3. Effect แสงไฟ (เหมือนเดิม) */}
-    <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
-    <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
-</div>
+          {/* 3. Effect แสงไฟ */}
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
+          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
+      </div>
 
       {/* ==================== 👤 User Profile (มุมขวาบน) ==================== */}
       {isLoaded && (
@@ -154,11 +153,12 @@ export default function HomePage() {
                </div>
             </div>
             
-            <h1 className="text-4xl font-black text-white uppercase tracking-wider text-center leading-none">
-              เดิมพัน<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 drop-shadow-sm">ไซเบอร์</span>
+            {/* ✅ เปลี่ยนชื่อตรงนี้ */}
+            <h1 className="text-3xl font-black text-white uppercase tracking-wider text-center leading-tight drop-shadow-md">
+               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">SATI</span><br/>
+              
             </h1>
-            <p className="text-xs text-gray-300 mt-2 font-bold tracking-widest opacity-80">โตไปไม่โดนหลอก 🤪</p>
+            <p className="text-xs text-gray-300 mt-2 font-bold tracking-widest opacity-80">ดิจิทัลรู้ทันมิจ พิชิตสแกมเมอร์</p>
           </div>
 
           <div className="flex flex-col gap-3 relative z-10">
