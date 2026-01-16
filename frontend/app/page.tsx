@@ -2,7 +2,7 @@
 // 👇 เพิ่มบรรทัดนี้ถ้ายังไม่มี (แก้ Error TypeScript)
 /// <reference path="../src/global.d.ts" />
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect , useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
 import Image from 'next/image';
@@ -21,11 +21,23 @@ interface GameStats {
 export default function HomePage() {
   const router = useRouter();
   const [view, setView] = useState<'home' | 'bet'>('home');
-  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
   // 2. เพิ่ม State สำหรับเก็บ User
   const [user, setUser] = useState<UserData | null>(null);
   const [stats, setStats] = useState<GameStats>({ normal: 0, virus: 0, chat: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const toggleMute = () => {
+    const newMutedStatus = !isMuted;
+    setIsMuted(newMutedStatus);
+    
+    if (audioRef.current) {
+      audioRef.current.muted = newMutedStatus; // สั่งให้เครื่องเล่นเพลงเงียบหรือดัง
+    }
+    // บันทึกลงเครื่องเพื่อให้หน้า Quiz ดึงไปใช้ต่อได้
+    localStorage.setItem('isMuted', JSON.stringify(newMutedStatus)); 
+  };
 
   useEffect(() => {
     // 3. โหลดข้อมูล User และ Stats
@@ -54,6 +66,34 @@ export default function HomePage() {
       }
     };
     loadData();
+    const audio = new Audio('/sounds/main_bgm.wav'); 
+    audio.loop = true;   // วนลูป
+    audio.volume = 0.4;  // ระดับเสียง
+    audioRef.current = audio;
+
+    const playBgm = () => {
+      audio.play().catch(() => {
+        console.log("Autoplay blocked, waiting for click");
+      });
+    };
+
+    const savedMute = localStorage.getItem('isMuted');
+    const initialMuted = savedMute !== null ? JSON.parse(savedMute) : false;
+
+    playBgm(); // พยายามเล่นทันที
+
+    // แก้ปัญหา Browser บล็อกเสียง: ให้เริ่มเล่นเมื่อคลิกส่วนไหนก็ได้ในครั้งแรก
+    window.addEventListener('click', playBgm, { once: true });
+
+    // ✅ 3. เพิ่มฟังก์ชันนี้ก่อนถึงบรรทัด return (JSX)
+
+    return () => {
+      audio.pause();
+      window.removeEventListener('click', playBgm);
+    };
+
+    
+
   }, []);
 
   const handleLogout = () => {
@@ -153,7 +193,7 @@ export default function HomePage() {
             </div>
             
             {/* ✅ 2. รูปชื่อโปรเจกต์ */}
-            <div className="relative w-80 h-32 mb-2 drop-shadow-lg">
+            <div className="relative w-[120%] -ml-4 h-56 drop-shadow-xl pointer-events-none">
                 <Image 
                   src="/images/name_pj.png" 
                   alt="SATI Project Name" 
@@ -262,6 +302,15 @@ export default function HomePage() {
                     </div>
                 </div>
              </button>
+             
+             {/* ✅ 4. เพิ่มปุ่มสลับเสียงไว้ก่อนปิดแท็ก </main> */}
+      {/* <button 
+        onClick={toggleMute}
+        className="absolute top-4 left-4 z-50 p-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-lg hover:scale-110 transition-all"
+        title={isMuted ? "Unmute" : "Mute"}
+      >
+        <span className="text-xl">{isMuted ? '🔇' : '🔊'}</span>
+      </button> */}
 
              {/* Hard */}
              <button onClick={() => selectDifficulty('hard')} className="relative group w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-red-900/20 hover:border-red-400/30 transition-all duration-300 overflow-hidden">
@@ -284,8 +333,17 @@ export default function HomePage() {
           >
             <span>←</span> กลับหน้าหลัก
           </button>
+          
         </div>
       )}
+
+      <button 
+        onClick={toggleMute}
+        className="absolute bottom-6 right-6 z-50 p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl"
+      >
+        <span className="text-xl">{isMuted ? '🔇' : '🔊'}</span>
+      </button>
     </main>
+
   );
 }

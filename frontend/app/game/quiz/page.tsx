@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import { useState, useEffect, useMemo, useCallback,useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
 import Link from 'next/link';
@@ -67,6 +67,14 @@ function QuizContent() {
   const searchParams = useSearchParams();
   const diff = searchParams.get('diff') || 'easy';
   const config = GAME_CONFIG[diff.toLowerCase()] || GAME_CONFIG['easy'];
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isMuted, setIsMuted] = useState(() => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('isMuted');
+    return saved !== null ? JSON.parse(saved) : false;
+  }
+  return false;
+});
 
   // --- State ---
   const [gameState, setGameState] = useState<'loading' | 'playing' | 'finished'>('loading');
@@ -102,20 +110,15 @@ function QuizContent() {
         const data: ApiResponse = await res.json();
 
         if (data.success && data.questions && data.questions.length > 0) {
-            
-            // ✅ เพิ่มตรงนี้: ฟังก์ชันสุ่มตัวเลือก (Shuffle Choices)
             const shuffledQuestions = data.questions.map((q) => {
-                // สร้าง array ใหม่ของ choices เพื่อนำมาสลับ
                 const choices = [...q.choices];
-                // ใช้สูตร Fisher-Yates Shuffle เพื่อการสุ่มที่ทั่วถึง
                 for (let i = choices.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [choices[i], choices[j]] = [choices[j], choices[i]];
                 }
                 return { ...q, choices };
             });
-
-            setQuestions(shuffledQuestions); // บันทึกคำถามที่สลับช้อยส์แล้ว
+            setQuestions(shuffledQuestions);
             setGameState('playing');
             setTimeout(() => setIsTimerRunning(true), 0);
             playSound('click'); 
@@ -130,6 +133,34 @@ function QuizContent() {
     };
     fetchQuestions();
   }, [diff, router]);
+   useEffect(() => {
+    // ใช้ชื่อไฟล์ที่ถูกต้องตามใน public/sounds/
+    const audio = new Audio('/sounds/main_bgm.wav'); 
+    audio.loop = true;   
+    audio.volume = 0.1; // เสียงเบา 10%
+    audio.muted = isMuted; // ตั้งค่า Mute ตาม State ล่าสุด
+    audioRef.current = audio;
+
+    const playBgm = () => {
+      audio.play().catch(() => {});
+    };
+
+    playBgm();
+    window.addEventListener('click', playBgm, { once: true });
+
+    return () => {
+      audio.pause();
+      window.removeEventListener('click', playBgm);
+    };
+  }, []); // [] เพื่อให้สร้าง Audio object แค่ครั้งเดียว
+
+
+  // --- 3. เพิ่ม useEffect เพื่อสั่ง Mute/Unmute ทันทีที่ State เปลี่ยน ---
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
 
   const handleTimeOut = useCallback(() => {
       setIsTimerRunning(false);
@@ -139,6 +170,15 @@ function QuizContent() {
       playSound('wrong');
       setEarnedPoints(0);
   }, []);
+
+  const toggleMute = () => {
+    if (audioRef.current) {
+      const newMutedStatus = !isMuted;
+      audioRef.current.muted = newMutedStatus;
+      setIsMuted(newMutedStatus);
+      localStorage.setItem('isMuted', JSON.stringify(newMutedStatus));
+    }
+  };
 
   // --- Timer ---
   useEffect(() => {
@@ -152,9 +192,13 @@ function QuizContent() {
   }, [timeLeft, isTimerRunning, handleTimeOut]);
 
   // --- Logic ---
-  const finishGame = () => {
+ const finishGame = () => {
       setGameState('finished');
       playSound('correct'); 
+      // ✅ สั่งหยุดเพลงประกอบเมื่อเกมจบ เพื่อให้ผู้เล่นฟังเสียงสรุปผลชัดเจน
+      if (audioRef.current) {
+          audioRef.current.pause();
+      }
   };
 
   const nextQuestion = () => {
@@ -226,6 +270,7 @@ function QuizContent() {
 
       return (
         <main className="relative min-h-screen w-screen bg-slate-950 font-sans flex flex-col items-center justify-start md:justify-center p-4 overflow-y-auto">
+            
             
             {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอปลง) ✨ ==================== */}
             <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
@@ -450,6 +495,8 @@ function QuizContent() {
             </div>
         </div>
 
+        
+
         {/* FEEDBACK POPUP (Responsive) */}
         {showFeedback && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -471,6 +518,16 @@ function QuizContent() {
                 </div>
             </div>
         )}
+
+    <button 
+            onClick={toggleMute}
+            className="fixed bottom-6 right-6 z-[120] p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl hover:scale-110 transition-all active:scale-95"
+            title={isMuted ? "เปิดเพลง" : "ปิดเพลง"}
+        >
+            <span className="text-2xl">{isMuted ? '🔇' : '🔊'}</span>
+        </button>        
+
+        
     </main>
   );
 }
