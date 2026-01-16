@@ -72,6 +72,15 @@ export default function ChatGamePage() {
     runChatSequence(scenario.msgs);
   };
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isMuted, setIsMuted] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('isMuted');
+      return saved !== null ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
+
   const goToNextScenario = useCallback(() => {
     setCurrentScenarioIdx(prev => {
         const next = prev + 1;
@@ -155,12 +164,41 @@ export default function ChatGamePage() {
   };
 
   useEffect(() => {
+    
     if (hasLoaded.current) return;
     hasLoaded.current = true;
     const shuffled = [...chatData].sort(() => Math.random() - 0.5);
     loadScenario(shuffled[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    // ใช้ไฟล์เดียวกับหน้าหลัก แต่เบากว่ามากเพื่อสมาธิ
+    const audio = new Audio('/sounds/main_bgm.wav'); 
+    audio.loop = true;
+    audio.volume = 0.1; // เบา 10%
+    audio.muted = isMuted;
+    audioRef.current = audio;
+
+    const playBgm = () => audio.play().catch(() => {});
+    playBgm();
+    window.addEventListener('click', playBgm, { once: true });
+
+    return () => {
+      audio.pause();
+      window.removeEventListener('click', playBgm);
+    };
+  }, []);
+
+useEffect(() => {
+    if (audioRef.current) audioRef.current.muted = isMuted;
+  }, [isMuted]);
+
+  // ✅ 4. ฟังก์ชันสลับเสียงที่จำค่าลงเครื่อง
+  const toggleMute = () => {
+    const newStatus = !isMuted;
+    setIsMuted(newStatus);
+    localStorage.setItem('isMuted', JSON.stringify(newStatus));
+  };
 
   // --- Components ---
 
@@ -360,11 +398,19 @@ export default function ChatGamePage() {
             {/* 2. กล่องใสใส่ปุ่ม */}
             <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-2xl">
                 <ChoiceButtons />
+            
+            
             </div>
 
         </div>
 
       </div>
+      <button 
+        onClick={toggleMute}
+        className="fixed bottom-6 right-6 z-[120] p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl hover:scale-110 transition-all active:scale-95"
+      >
+        <span className="text-2xl">{isMuted ? '🔇' : '🔊'}</span>
+      </button>
     </div>
   );
 }
