@@ -135,15 +135,15 @@ export default function HomePage() {
 
       {/* --- VIEW 1: HOME MENU --- */}
       {view === 'home' && (
-        <div className="relative w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden group/card">
+        <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden group/card">
           
           <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
           <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
 
-          <div className="flex flex-col items-center mb-6 relative">
+          <div className="flex flex-col items-center mb-2 relative">
             
-            {/* ✅ 1. รูป Mascot (ไม่มีวงกลมแล้ว) */}
-            <div className="w-32 h-32 relative mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(167,139,250,0.9)]">
+            {/* ✅ Mascot: ใช้ -mb-4 เพื่อดึงชื่อขึ้นมาติดกัน, z-10 เพื่อให้บังชื่อนิดๆ */}
+            <div className="w-24 h-24 relative -mb-6 z-10 animate-bounce drop-shadow-[0_0_15px_rgba(167,139,250,0.9)]">
                 <Image 
                     src="/images/mas.png" 
                     alt="Mascot" 
@@ -152,8 +152,8 @@ export default function HomePage() {
                 />
             </div>
             
-            {/* ✅ 2. รูปชื่อโปรเจกต์ */}
-            <div className="relative w-80 h-32 mb-2 drop-shadow-lg">
+            {/* ✅ Project Name: w-[120%] เพื่อขยายให้ล้น Padding ออกมานิดนึง, h-56 ให้ใหญ่สะใจ */}
+            <div className="relative w-[120%] -ml-4 h-56 drop-shadow-xl pointer-events-none">
                 <Image 
                   src="/images/name_pj.png" 
                   alt="SATI Project Name" 
@@ -161,6 +161,7 @@ export default function HomePage() {
                   className="object-contain" 
                 />
             </div>
+            
           </div>
 
           <div className="flex flex-col gap-3 relative z-10">
