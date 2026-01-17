@@ -38,16 +38,19 @@ export default function LoginPage() {
       localStorage.setItem('user', JSON.stringify(data.user));
       window.location.href = '/'; 
 
-    } catch (err: unknown) { // ✅ เปลี่ยน any เป็น unknown หรือลบ Type ออกเลยก็ได้
-  console.error("Login Error:", err);
-  
-  // แปลง err ให้เป็น Error object เพื่อดึง message
-  if (err instanceof Error) {
-    setError(err.message);
-  } else {
-    setError('เชื่อมต่อ Server ไม่ได้');
-  }
-}
+    } catch (err: unknown) { 
+      console.error("Login Error:", err);
+      
+      // แปลง err ให้เป็น Error object เพื่อดึง message
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('เชื่อมต่อ Server ไม่ได้');
+      }
+
+      // ✅ แก้ไข: ต้องสั่งหยุดโหลดเมื่อเกิด Error ปุ่มถึงจะกดใหม่ได้
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -64,7 +67,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="text-6xl mb-4 animate-bounce">🔐</div>
           <h1 className="text-3xl font-black text-white uppercase tracking-widest">เข้าสู่ระบบ</h1>
-          <p className="text-purple-300 text-sm mt-2">ยืนยันตัวตนเพื่อเดิมพันไซเบอร์</p>
+          <p className="text-purple-300 text-sm mt-2">ยืนยันตัวตนเพื่อเข้าสู่ SATI </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
