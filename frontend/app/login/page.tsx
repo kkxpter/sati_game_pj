@@ -90,6 +90,11 @@ export default function LoginPage() {
               onChange={(e) => setFormData({...formData, password: e.target.value})}
               required
             />
+            <div className="text-right mt-1">
+                <Link href="/forgot_pass" className="text-[10px] text-gray-400 hover:text-purple-300 transition-colors">
+                    ลืมรหัสผ่าน?
+                </Link>
+            </div>
           </div>
 
           {error && (
