@@ -1,5 +1,5 @@
 'use client';
-// 👇 แก้ path ให้ตรงกับที่ไฟล์ global.d.ts อยู่จริงในเครื่องคุณ (บางทีอาจเป็น ../../src/...)
+// ... (imports เหมือนเดิม)
 /// <reference path="../../src/global.d.ts" />
 
 import { useState, useRef } from 'react';
@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import React from 'react';
 
+// ... (Icons Component เหมือนเดิม)
 const Icons = {
   User: () => <span className="w-4 h-4 inline-flex items-center justify-center">👤</span>,
   Mail: () => <span className="w-4 h-4 inline-flex items-center justify-center">✉️</span>,
@@ -33,114 +34,123 @@ export default function RegisterPage() {
   const yearRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // ... (เหมือนเดิม)
     const { name, value } = e.target;
-
-    // กรองให้พิมพ์ได้แค่ตัวเลข
     if (['phone', 'birthDay', 'birthMonth', 'birthYear'].includes(name)) {
         if (!/^\d*$/.test(value)) return;
     }
-
-    // Auto Focus Logic
-    if (name === 'birthDay' && value.length === 2) {
-        monthRef.current?.focus();
-    }
-    if (name === 'birthMonth' && value.length === 2) {
-        yearRef.current?.focus();
-    }
-
+    if (name === 'birthDay' && value.length === 2) monthRef.current?.focus();
+    if (name === 'birthMonth' && value.length === 2) yearRef.current?.focus();
     setFormData({ ...formData, [name]: value });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, prevRef: React.RefObject<HTMLInputElement | null>) => {
+    // ... (เหมือนเดิม)
     if (e.key === 'Backspace' && (e.target as HTMLInputElement).value === '') {
         prevRef.current?.focus();
     }
   };
 
+  // ✅ จุดที่แก้ไขหลักอยู่ตรงนี้
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    // --- Validation ---
-    if (formData.password !== formData.confirmPassword) { setError('รหัสผ่านไม่ตรงกัน'); return; }
-    if (formData.password.length < 4) { setError('รหัสผ่านสั้นเกินไป'); return; }
-
-    // --- Date Validation & Formatting ---
-    // ตรวจสอบว่ากรอกครบไหม
-    if (!formData.birthDay || !formData.birthMonth || !formData.birthYear) {
-        setError('กรุณากรอกวันเดือนปีเกิดให้ครบ');
-        return;
-    }
-
-    const yearBE = parseInt(formData.birthYear);
-    const yearAD = yearBE - 543; // แปลง พ.ศ. เป็น ค.ศ.
     
-    // สร้าง Date Object เพื่อเช็กอายุ
-    const birthDateObj = new Date(yearAD, parseInt(formData.birthMonth) - 1, parseInt(formData.birthDay));
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (birthDateObj > today) {
-        setError('วันเกิดต้องไม่เกินวันปัจจุบัน');
-        return;
-    }
-
-    let age = today.getFullYear() - birthDateObj.getFullYear();
-    const m = today.getMonth() - birthDateObj.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
-        age--;
-    }
-
-    if (age < 10) { setError('ขออภัย ผู้ใช้งานต้องมีอายุ 10 ปีขึ้นไป'); return; }
-
-    // --- Sending to Backend ---
+    // 1. เริ่มโหลดทันทีที่กดปุ่ม
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        // --- Validation (ตรวจสอบความถูกต้อง) ---
+        if (formData.password !== formData.confirmPassword) { 
+            throw new Error('รหัสผ่านไม่ตรงกัน'); 
+        }
+        if (formData.password.length < 4) { 
+            throw new Error('รหัสผ่านสั้นเกินไป'); 
+        }
+        if (!formData.birthDay || !formData.birthMonth || !formData.birthYear) {
+            throw new Error('กรุณากรอกวันเดือนปีเกิดให้ครบ');
+        }
 
-      // จัดฟอร์แมตวันที่ให้เป็น YYYY-MM-DD (ISO Format) เพื่อส่งให้ Database
-      const formattedBirthDate = `${yearAD}-${formData.birthMonth.padStart(2, '0')}-${formData.birthDay.padStart(2, '0')}`;
+        const yearBE = parseInt(formData.birthYear);
+        const yearAD = yearBE - 543;
+        
+        const birthDateObj = new Date(yearAD, parseInt(formData.birthMonth) - 1, parseInt(formData.birthDay));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-      const res = await fetch(`${apiUrl}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            username: formData.username,
-            password: formData.password,
-            email: formData.email,
-            phone: formData.phone,
-            birthdate: formattedBirthDate, // ✅ ส่งแบบ Date String
-            address: formData.address || '-' // ถ้าว่างส่งขีด
-        })
-      });
+        if (birthDateObj > today) {
+            throw new Error('วันเกิดต้องไม่เกินวันปัจจุบัน');
+        }
 
-      const data = await res.json();
+        let age = today.getFullYear() - birthDateObj.getFullYear();
+        const m = today.getMonth() - birthDateObj.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
+            age--;
+        }
 
-      if (!res.ok) {
-        throw new Error(data.error || 'สมัครสมาชิกไม่สำเร็จ');
-      }
+        if (age < 10) { 
+            throw new Error('ขออภัย ผู้ใช้งานต้องมีอายุ 10 ปีขึ้นไป'); 
+        }
 
-      // ✅ สมัครสำเร็จ -> ไปหน้า Login
-      alert('สมัครสมาชิกเรียบร้อย! กรุณาเข้าสู่ระบบ');
-      router.push('/login');
+        // --- Sending to Backend ---
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        const formattedBirthDate = `${yearAD}-${formData.birthMonth.padStart(2, '0')}-${formData.birthDay.padStart(2, '0')}`;
 
-    } catch (err: unknown) { // ✅ เปลี่ยนเป็น unknown
-  console.error("Register Error:", err);
+        // ตั้ง Timeout ไว้กันกรณี Server ค้างนานเกินไป (เช่น 10 วินาที)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); 
 
-  if (err instanceof Error) {
-    setError(err.message);
-  } else {
-    setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
-  }
-}
+        const res = await fetch(`${apiUrl}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: formData.username,
+                password: formData.password,
+                email: formData.email,
+                phone: formData.phone,
+                birthdate: formattedBirthDate,
+                address: formData.address || '-'
+            }),
+            signal: controller.signal // เชื่อมต่อกับตัวจับเวลา
+        });
+
+        clearTimeout(timeoutId); // ยกเลิกตัวจับเวลาถ้าเสร็จก่อน
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.error || 'สมัครสมาชิกไม่สำเร็จ');
+        }
+
+        // ✅ สำเร็จจริงๆ ค่อยไปหน้า Login
+        alert('สมัครสมาชิกเรียบร้อย! กรุณาเข้าสู่ระบบ');
+        router.push('/login');
+        // ไม่ต้อง set false ที่นี่ เพราะเดี๋ยวหน้าเว็บเปลี่ยนแล้ว
+
+    } catch (err: unknown) {
+        console.error("Register Error:", err);
+        
+        if (err instanceof Error) {
+            // เช็คว่าเป็น error จากการหมดเวลาหรือเปล่า
+            if (err.name === 'AbortError') {
+                setError('การเชื่อมต่อหมดเวลา กรุณาลองใหม่');
+            } else {
+                setError(err.message);
+            }
+        } else {
+            setError('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+        }
+
+        // ❌ ถ้า Error ให้หยุดโหลด เพื่อให้กดใหม่ได้
+        setIsLoading(false); 
+    }
   };
   
-  // --- UI ส่วนล่างนี้เหมือนเดิม 100% ---
+  // ... (ส่วน UI return เหมือนเดิมทุกประการ)
   return (
     <main className="relative w-screen h-screen flex flex-col items-center justify-center p-4 bg-slate-900 font-sans overflow-hidden">
-      
-      {/* Background */}
+        {/* ... (วางโค้ด UI เดิมได้เลยครับ ไม่ต้องแก้) ... */}
+        {/* Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900 via-slate-900 to-black"></div>
          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/30 blur-[120px] animate-pulse-slow mix-blend-screen"></div>

@@ -11,12 +11,10 @@ datasource db {
 
 // --- 2. ส่วน Model (ตาราง) ---
 
-// ✅ เพิ่มตาราง Category ตามที่ขอ
 model Category {
   cg_id   Int    @id @default(autoincrement())
-  mode_cg String // ชื่อหมวดหมู่ (เช่น "ความรู้ทั่วไป", "กลโกง")
+  mode_cg String 
 
-  // Relation: เอาไว้เชื่อมกับ Game และ Questions
   games     Game[]
   questions Questions[]
 
@@ -34,21 +32,38 @@ model User {
 
   games      Game[]
   answerLogs AnswerLogs[]
+  
+  // ✅ เพิ่ม: Relation กับตารางคะแนนรวม (GameScore)
+  scores     GameScore[] 
 
   @@map("user")
 }
 
-model Questions {
-  qid      Int    @id @default(autoincrement())
-  level    String
-  question String
-  explanation String? @db.Text
-  // ✅ เพิ่ม: เชื่อมกับ Category (เพื่อให้รู้ว่าคำถามนี้อยู่หมวดไหน)
-  cg_id    Int?   
-  category Category? @relation(fields: [cg_id], references: [cg_id])
+// ✅ เพิ่ม: ตารางสำหรับเก็บคะแนน Leaderboard โดยเฉพาะ (รองรับทั้ง Quiz และ Virus)
+model GameScore {
+  gs_id      Int      @id @default(autoincrement())
+  score      Int      // คะแนนที่ได้
+  game_type  String   // ประเภทเกม เช่น 'quiz', 'virus'
+  difficulty String?  // ระดับความยาก เช่น 'hard' (ถ้าเป็น virus อาจจะเป็น null)
+  played_at  DateTime @default(now())
 
-  choices    Choices[]
-  answerLogs AnswerLogs[]
+  uid        Int
+  user       User     @relation(fields: [uid], references: [uid], onDelete: Cascade)
+
+  @@map("game_score")
+}
+
+model Questions {
+  qid         Int     @id @default(autoincrement())
+  level       String
+  question    String
+  explanation String? @db.Text
+  
+  cg_id       Int?    
+  category    Category? @relation(fields: [cg_id], references: [cg_id])
+
+  choices     Choices[]
+  answerLogs  AnswerLogs[]
 
   @@map("questions")
 }
@@ -59,27 +74,26 @@ model Choices {
   choice_text String
   is_correct  Boolean
 
-  question   Questions    @relation(fields: [qid], references: [qid], onDelete: Cascade)
-  answerLogs AnswerLogs[]
+  question    Questions @relation(fields: [qid], references: [qid], onDelete: Cascade)
+  answerLogs  AnswerLogs[]
 
   @@map("choices")
 }
 
 model Game {
-  gid         Int       @id @default(autoincrement())
-  uid         Int       
-  
-  // ✅ แก้ไข: เชื่อมกับ Category (เพื่อให้รู้ว่าเกมนี้เล่นหมวดไหน)
+  gid         Int      @id @default(autoincrement())
+  uid         Int      
+   
   cg_id       Int?      
   category    Category? @relation(fields: [cg_id], references: [cg_id])
 
-  total_score Int       @default(0)
-  time_taken  Float?    
-  started_at  DateTime  @default(now())
+  total_score Int      @default(0)
+  time_taken  Float?   
+  started_at  DateTime @default(now())
   finished_at DateTime? 
 
-  user       User       @relation(fields: [uid], references: [uid], onDelete: Cascade)
-  answerLogs AnswerLogs[]
+  user        User     @relation(fields: [uid], references: [uid], onDelete: Cascade)
+  answerLogs  AnswerLogs[]
 
   @@map("game")
 }

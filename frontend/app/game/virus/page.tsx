@@ -31,6 +31,43 @@ export default function VirusPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const bossTimerRef = useRef<number>(0);
 
+  // --- 🔥 SECTION 1: ฟังก์ชันบันทึกคะแนน ---
+  const saveScore = async (finalScore: number) => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return;
+    const user = JSON.parse(userStr);
+
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        await fetch(`${apiUrl}/scores/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: user.id,
+                score: finalScore,
+                gameType: 'virus'
+            })
+        });
+        console.log("✅ Score saved successfully:", finalScore);
+    } catch (e) {
+        console.error("❌ Save score error:", e);
+    }
+  };
+
+  // --- 🔥 SECTION 2: ระบบจบเกมอัตโนมัติ (แก้ไขแล้ว) ---
+  useEffect(() => {
+    if (hp <= 0 && view === 'playing') {
+        saveScore(score); 
+        
+        // ✅ ใส่ setTimeout แก้ Error Cascading Render
+        const timeoutId = setTimeout(() => {
+            setView('gameover');
+        }, 0);
+
+        return () => clearTimeout(timeoutId);
+    }
+  }, [hp, view, score]);
+
   // CSS Animation
   const shakeStyle = `
     @keyframes shake {
@@ -123,8 +160,6 @@ export default function VirusPage() {
                          setHp(h => Math.max(0, h - 100));
                          setCombo(0);
                      }
-
-                     if (hp <= 0) setView('gameover');
                      return nextGrid;
                  }
                  return currentGrid;
@@ -137,9 +172,13 @@ export default function VirusPage() {
       loopRef.current = setTimeout(spawn, spawnRate);
     };
 
-    spawn();
-    return () => { if (loopRef.current) clearTimeout(loopRef.current); };
-  }, [view, phase, hp]);
+    // ✅ แก้ไข: ใช้ setTimeout 0 เพื่อไม่ให้ spawn ทำงาน sync เกินไปตอนเริ่ม
+    const initialSpawn = setTimeout(spawn, 0);
+    return () => { 
+        clearTimeout(initialSpawn);
+        if (loopRef.current) clearTimeout(loopRef.current); 
+    };
+  }, [view, phase]); 
 
   // 3. Click Handler
   const handleHit = (index: number) => {
@@ -170,8 +209,7 @@ export default function VirusPage() {
         triggerShake(); 
         playSound('wrong');
         newGrid[index] = 'exploding';
-        setHp(0);
-        setView('gameover');
+        setHp(0); 
     } else if (type === 'file') {
         triggerShake(); 
         playSound('wrong');
@@ -182,8 +220,7 @@ export default function VirusPage() {
             setGrid(g => { const n = [...g]; n[index] = 'empty'; return n; });
         }, 300);
     }
-
-    if (hp <= 0 && type !== 'bomb') setView('gameover');
+    
     setGrid(newGrid);
   };
 
@@ -203,25 +240,13 @@ export default function VirusPage() {
     <div className={`relative h-screen w-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans transition-all ${isShaking ? 'animate-shake' : ''}`}>
        <style>{shakeStyle}</style>
 
-       {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอปลง) ✨ ==================== */}
+       {/* Background */}
        <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
-          
-          {/* 1. รูปภาพเลื่อน */}
           <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
-              <div 
-                  className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
-                  style={{ backgroundImage: "url('/images/bg1.png')" }} 
-              ></div>
-              <div 
-                  className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
-                  style={{ backgroundImage: "url('/images/bg1.png')" }} 
-              ></div>
+              <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
+              <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
           </div>
-
-          {/* 2. Overlay สีดำไล่ระดับ */}
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
-
-          {/* 3. Effect แสงไฟ */}
           <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
           <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
        </div>
@@ -282,14 +307,12 @@ export default function VirusPage() {
        {/* --- 2. GAMEPLAY SCREEN --- */}
        {view === 'playing' && (
         <div className="relative z-10 w-full max-w-[380px] flex flex-col gap-4 animate-fade-in">
-            
-            {/* ✅ 1. Header Bar: ปรับพื้นหลังให้เข้มขึ้น (bg-black/40) */}
+            {/* Header Bar */}
             <div className="flex justify-between items-center bg-black/40 p-4 rounded-2xl border border-white/10 backdrop-blur-xl shadow-lg">
                 <div>
                     <div className="text-[10px] text-gray-400 tracking-widest font-bold">TIME</div>
                     <div className="text-2xl font-mono text-white">{survivalTime}s</div>
                 </div>
-                
                 <div className="flex flex-col items-center">
                     <div className="text-[10px] text-purple-400 tracking-widest font-bold mb-1">THREAT LEVEL</div>
                     <div className="flex gap-1">
@@ -298,7 +321,6 @@ export default function VirusPage() {
                         <div className={`w-8 h-2 rounded-full transition-colors ${phase >= 3 ? 'bg-red-500 shadow-[0_0_10px_red] animate-pulse' : 'bg-gray-700'}`}></div>
                     </div>
                 </div>
-
                 <div className="text-right">
                     <div className="text-[10px] text-blue-400 tracking-widest font-bold">SCORE</div>
                     <div className="text-2xl font-black text-blue-300">{score}</div>
@@ -310,7 +332,6 @@ export default function VirusPage() {
                     <span>SYSTEM HEALTH</span>
                     <span>{hp}/200</span>
                 </div>
-                {/* ✅ 2. Health Bar Bg: ปรับให้เข้มขึ้น (bg-black/30) */}
                 <div className="w-full bg-black/30 h-6 rounded-full overflow-hidden border border-white/10 shadow-inner relative">
                     <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.2)_1px,transparent_1px)] bg-[size:10%_100%] z-10 pointer-events-none"></div>
                     <div 
@@ -320,7 +341,6 @@ export default function VirusPage() {
                 </div>
             </div>
             
-            {/* ✅ 3. Grid Container: ปรับพื้นหลังให้เข้มขึ้นมาก (bg-black/60) */}
             <div className={`p-4 bg-black/60 backdrop-blur-md rounded-[2rem] border border-white/10 shadow-2xl transition-all duration-500 ${phase === 3 ? 'border-red-500/30 shadow-[0_0_30px_rgba(220,38,38,0.2)]' : ''}`}>
                 <div className="grid grid-cols-4 gap-2">
                     {grid.map((cell, i) => (
@@ -362,35 +382,35 @@ export default function VirusPage() {
 
        {/* --- 3. GAMEOVER SCREEN --- */}
        {view === 'gameover' && (
-            <div className="relative z-10 bg-black/60 backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl animate-fade-in">
-                <div className="text-8xl mb-4 animate-bounce drop-shadow-xl">💥</div>
-                <h1 className="text-3xl font-black mb-2 uppercase tracking-wide text-red-500 drop-shadow-md">
-                    SYSTEM CRASHED
-                </h1>
-                
-                <div className="bg-white/5 rounded-xl p-4 mb-6 border border-white/10">
-                    <p className="text-gray-400 text-xs uppercase tracking-widest font-bold">เวลาที่รอด</p>
-                    <div className="text-white text-4xl font-mono font-black mb-2">{survivalTime} วินาที</div>
-                    <div className="w-full h-px bg-white/10 my-2"></div>
-                    <p className="text-gray-400 text-xs uppercase tracking-widest font-bold">คะแนนรวม</p>
-                    <div className="text-blue-300 text-5xl font-mono font-black">{score}</div>
-                </div>
+           <div className="relative z-10 bg-black/60 backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl animate-fade-in">
+               <div className="text-8xl mb-4 animate-bounce drop-shadow-xl">💥</div>
+               <h1 className="text-3xl font-black mb-2 uppercase tracking-wide text-red-500 drop-shadow-md">
+                   SYSTEM CRASHED
+               </h1>
+               
+               <div className="bg-white/5 rounded-xl p-4 mb-6 border border-white/10">
+                   <p className="text-gray-400 text-xs uppercase tracking-widest font-bold">เวลาที่รอด</p>
+                   <div className="text-white text-4xl font-mono font-black mb-2">{survivalTime} วินาที</div>
+                   <div className="w-full h-px bg-white/10 my-2"></div>
+                   <p className="text-gray-400 text-xs uppercase tracking-widest font-bold">คะแนนรวม</p>
+                   <div className="text-blue-300 text-5xl font-mono font-black">{score}</div>
+               </div>
 
-                <div className="flex gap-3">
-                    <button 
-                        onClick={() => { playSound('click'); router.push('/'); }} 
-                        className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all"
-                    >
-                        กลับหน้าหลัก
-                    </button>
-                    <button 
-                        onClick={startGame} 
-                        className="flex-1 bg-green-500 hover:bg-green-400 text-black font-bold py-3 rounded-xl transition-all shadow-lg hover:scale-105"
-                    >
-                        เล่นใหม่
-                    </button>
-                </div>
-            </div>
+               <div className="flex gap-3">
+                   <button 
+                       onClick={() => { playSound('click'); router.push('/'); }} 
+                       className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all"
+                   >
+                       กลับหน้าหลัก
+                   </button>
+                   <button 
+                       onClick={startGame} 
+                       className="flex-1 bg-green-500 hover:bg-green-400 text-black font-bold py-3 rounded-xl transition-all shadow-lg hover:scale-105"
+                   >
+                       เล่นใหม่
+                   </button>
+               </div>
+           </div>
        )}
     </div>
   );
