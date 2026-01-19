@@ -18,8 +18,9 @@ export default function ForgotPasswordPage() {
     setSuccess('');
 
     // ✅ เช็ค URL ให้ชัวร์ (ถ้า Backend มี /api ต้องใส่ด้วย)
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-
+     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    
+    //const apiUrl = 'http://localhost:4000';
     try {
       const res = await fetch(`${apiUrl}/reset-password`, {
         method: 'POST',
