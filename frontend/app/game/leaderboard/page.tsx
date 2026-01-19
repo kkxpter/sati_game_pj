@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
+// ลบ Link ออกถ้าไม่ได้ใช้ หรือเก็บไว้ถ้ามีปุ่มกลับหน้าหลักที่ใช้ Link
+import Link from 'next/link'; 
 
-// 1. สร้าง Type
+// 1. Interface สำหรับข้อมูลที่ใช้แสดงผลในหน้าเว็บ
 interface LeaderboardPlayer {
   username: string;
   score: number;
@@ -12,118 +14,73 @@ interface LeaderboardPlayer {
   isMe?: boolean;
 }
 
-// 🔥 Mock Data
-const MOCK_LEADERBOARD: LeaderboardPlayer[] = [
-  { username: 'CyberGod_99', score: 99999, avatar: '🤖' },
-  { username: 'HackHunter_X', score: 85000, avatar: '🕵️' },
-  { username: 'NoScamPls', score: 78900, avatar: '🛡️' },
-  { username: 'PhishBuster', score: 72500, avatar: '🎣' },
-  { username: 'SecureMind', score: 68000, avatar: '🧠' },
-  { username: 'NetWalker', score: 65400, avatar: '🌐' },
-  { username: 'ByteDefender', score: 62000, avatar: '🧱' },
-  { username: 'ZeroTrust', score: 59000, avatar: '🔒' },
-  { username: 'WhiteHat_TH', score: 55500, avatar: '🎩' },
-  { username: 'BugBounty', score: 51200, avatar: '🐛' },
-  { username: 'Firewall_Master', score: 48000, avatar: '🔥' },
-  { username: 'CryptoKeeper', score: 45000, avatar: '💰' },
-  { username: 'DataGuardian', score: 42000, avatar: '💾' },
-  { username: 'CloudSentinel', score: 39500, avatar: '☁️' },
-  { username: 'NetworkNinja', score: 37000, avatar: '🥷' },
-  { username: 'CodeWarrior', score: 35000, avatar: '⚔️' },
-  { username: 'SysAdmin', score: 33000, avatar: '🖥️' },
-  { username: 'PatchManager', score: 31000, avatar: '🩹' },
-  { username: 'LogAnalyzer', score: 29000, avatar: '📊' },
-  { username: 'VirusSlayer', score: 27500, avatar: '🦠' },
-  { username: 'SpamBlocker', score: 26000, avatar: '📧' },
-  { username: 'LinkChecker', score: 24500, avatar: '🔗' },
-  { username: 'PassManager', score: 23000, avatar: '🔑' },
-  { username: 'TwoFactor', score: 21500, avatar: '📱' },
-  { username: 'Incognito', score: 20000, avatar: '🕶️' },
-  { username: 'ProxyServer', score: 19500, avatar: '🔄' },
-  { username: 'VPN_User', score: 18000, avatar: '🌍' },
-  { username: 'CookieMonster', score: 17500, avatar: '🍪' },
-  { username: 'CacheCleaner', score: 16000, avatar: '🧹' },
-  { username: 'UpdateRequired', score: 15500, avatar: '⚠️' },
-  { username: 'TrojanHorse', score: 14000, avatar: '🐴' },
-  { username: 'WormDetector', score: 13500, avatar: '🪱' },
-  { username: 'SpywareScanner', score: 12000, avatar: '🔍' },
-  { username: 'AdBlocker', score: 11500, avatar: '🚫' },
-  { username: 'PopUp_Killer', score: 10000, avatar: '💥' },
-  { username: 'Digital_Nomad', score: 9500, avatar: '🏝️' },
-  { username: 'WiFi_Secured', score: 9000, avatar: '📶' },
-  { username: 'Bluetooth_Off', score: 8500, avatar: '🦷' },
-  { username: 'NFC_Reader', score: 8000, avatar: '💳' },
-  { username: 'QR_Scanner', score: 7500, avatar: '📷' },
-  { username: 'Social_Eng', score: 7000, avatar: '🗣️' },
-  { username: 'Identity_Safe', score: 6500, avatar: '🆔' },
-  { username: 'Backup_Daily', score: 6000, avatar: '📂' },
-  { username: 'Restore_Point', score: 5500, avatar: '⏪' },
-  { username: 'DeepWeb_Ex', score: 5000, avatar: '🔦' },
-  { username: 'DarkMode', score: 4500, avatar: '🌑' },
-  { username: 'RGB_Key', score: 4000, avatar: '🌈' },
-  { username: 'Mech_Switch', score: 3500, avatar: '⌨️' },
-  { username: 'Mouse_Jig', score: 3000, avatar: '🖱️' },
-  { username: 'Screen_Sav', score: 2500, avatar: '📺' },
-];
+// 2. ✅ เพิ่ม Interface สำหรับข้อมูลดิบจาก API (แก้ปัญหา Unexpected any)
+interface ApiPlayerResponse {
+  username: string;
+  score: number;
+  // อาจมี field อื่นๆ จาก DB ที่เราไม่ได้ใช้ ก็ปล่อยไว้ได้ หรือใส่เป็น optional
+}
 
 export default function LeaderboardPage() {
   const router = useRouter();
-  
   const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'quiz_hard' | 'virus'>('quiz_hard');
   const [myRankIndex, setMyRankIndex] = useState<number>(-1);
 
+  const fetchLeaderboard = async (type: string) => {
+      setIsLoading(true);
+      setMyRankIndex(-1); // Reset อันดับตัวเองก่อนโหลดใหม่
+      try {
+          // ดึง User ปัจจุบันเพื่อหา isMe
+          const userStr = localStorage.getItem('user');
+          const currentUser = userStr ? JSON.parse(userStr) : null;
+
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+          const res = await fetch(`${apiUrl}/scores/leaderboard?type=${type}`);
+          
+          if (!res.ok) {
+             throw new Error('Failed to fetch data');
+          }
+
+          const data: ApiPlayerResponse[] = await res.json(); // 👈 ระบุ Type ตรงนี้ว่าเป็น Array ของ ApiPlayerResponse
+
+          // Map ข้อมูลเพื่อเช็คว่าเป็นเราไหม + ใส่ Avatar
+          const avatars = ['🤖', '🕵️', '🛡️', '🎣', '🧠', '🌐', '🧱', '🔒', '🎩', '🐛'];
+          
+          const mappedData: LeaderboardPlayer[] = data.map((p, idx) => ({
+              username: p.username,
+              score: p.score,
+              avatar: p.username === currentUser?.username ? '😎' : avatars[idx % avatars.length],
+              isMe: currentUser && p.username === currentUser.username
+          }));
+
+          setLeaderboard(mappedData);
+
+          // หาอันดับตัวเอง
+          const myIndex = mappedData.findIndex((p) => p.isMe);
+          setMyRankIndex(myIndex);
+
+      } catch (error) {
+          console.error("Fetch leaderboard error:", error);
+      } finally {
+          setIsLoading(false);
+      }
+  };
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-        // 1. ดึงข้อมูล User และ Score
-        const userStr = localStorage.getItem('user');
-        const statsStr = localStorage.getItem('cyberStakes_played');
-        
-        let userScore = 0;
-        let currentUser = null;
+      fetchLeaderboard(activeTab);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
-        if (userStr && statsStr) {
-            currentUser = JSON.parse(userStr);
-            const stats = JSON.parse(statsStr);
-            userScore = ((stats.normal || 0) * 500) + ((stats.virus || 0) * 200) + ((stats.chat || 0) * 1000);
-        }
-
-        // 2. รวมข้อมูล
-        const allPlayers: LeaderboardPlayer[] = [...MOCK_LEADERBOARD];
-        
-        if (currentUser) {
-            allPlayers.push({ 
-                username: currentUser.username, 
-                score: userScore, 
-                avatar: '😎', 
-                isMe: true 
-            });
-        }
-
-        // 3. เรียงลำดับ (มาก -> น้อย)
-        allPlayers.sort((a, b) => b.score - a.score);
-        
-        // 4. หาอันดับของเรา
-        const myIndex = allPlayers.findIndex(p => p.isMe);
-        setMyRankIndex(myIndex);
-
-        setLeaderboard(allPlayers);
-        setIsLoading(false); 
-    }, 800);
-
-    return () => clearTimeout(timer); 
-  }, []);
-
-  // Helper Function
+  // Helper Function: แสดงแต่ละแถว
   const renderPlayerRow = (player: LeaderboardPlayer, index: number, isSticky: boolean = false) => {
       const rank = index + 1;
       
-      // Responsive Style: ปรับ Padding และขนาดตามหน้าจอ
       let cardStyle = isSticky
         ? "bg-[#0a0a0a]/90 backdrop-blur-xl border-t border-cyan-500/50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 rounded-t-2xl md:rounded-t-[2rem]" 
         : "bg-white/5 border border-white/5 hover:bg-white/10 rounded-xl md:rounded-2xl"; 
 
-      // Responsive Font Size
       let rankDisplay = <span className="text-gray-500 font-bold text-base md:text-lg w-6 md:w-8 text-center font-mono">#{rank}</span>;
       let textGradient = "text-gray-200";
       let avatarStyle = "bg-white/5 text-gray-400 border-transparent";
@@ -154,7 +111,7 @@ export default function LeaderboardPage() {
           scoreColor = "text-orange-200";
       }
 
-      // 🔵 Sticky Bar
+      // 🔵 Sticky Bar & User Highlight
       if (isSticky) {
           rankDisplay = <span className="text-cyan-400 font-black text-lg md:text-xl w-6 md:w-8 text-center font-mono drop-shadow-[0_0_5px_cyan]">#{rank}</span>;
           textGradient = "text-white";
@@ -201,12 +158,12 @@ export default function LeaderboardPage() {
   };
 
   return (
-    // ✅ ใช้ h-[100dvh] เพื่อแก้ปัญหา Browser Bar ในมือถือ
     <main className="relative w-screen h-[100dvh] flex flex-col items-center justify-center md:p-4 overflow-hidden bg-[#0a0a0a] font-sans selection:bg-cyan-500/30">
       
       {/* ==================== ✨ BACKGROUND ✨ ==================== */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none"> 
           <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-30 mix-blend-luminosity">
+              {/* ตรวจสอบ path รูปภาพให้ถูกต้อง */}
               <div className="w-1/2 h-full bg-cover bg-center grayscale" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
               <div className="w-1/2 h-full bg-cover bg-center grayscale" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
           </div>
@@ -218,22 +175,34 @@ export default function LeaderboardPage() {
       </div>
 
       {/* ==================== 🏆 MAIN CARD ==================== */}
-      {/* ✅ ปรับขนาด Mobile: w-full h-full rounded-none */}
       <div className="relative z-20 w-full h-full md:max-w-xl md:h-[85vh] bg-[#0a0a0a] md:bg-black/40 backdrop-blur-xl md:border border-white/10 md:rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-fade-in-up">
         
         {/* Header */}
         <div className="shrink-0 pt-8 pb-4 md:pt-8 md:pb-4 text-center relative z-10 bg-gradient-to-b from-[#0a0a0a] to-transparent">
             <div className="text-5xl md:text-6xl mb-2 filter drop-shadow-[0_0_20px_rgba(6,182,212,0.4)] animate-bounce-slow">🏆</div>
-            <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-[0.15em] drop-shadow-lg mb-1">
+            <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-[0.15em] drop-shadow-lg mb-4">
                 Hall of Fame
             </h1>
-            <div className="w-16 h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent mx-auto rounded-full opacity-80"></div>
+            
+            {/* ✅ ปุ่มสลับ Tab */}
+            <div className="flex justify-center gap-3 px-4">
+                <button 
+                    onClick={() => { playSound('click'); setActiveTab('quiz_hard'); }}
+                    className={`px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all border ${activeTab === 'quiz_hard' ? 'bg-cyan-600/20 border-cyan-500 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'bg-white/5 border-white/10 text-gray-500 hover:bg-white/10'}`}
+                >
+                    🧠 Quiz Hard
+                </button>
+                <button 
+                    onClick={() => { playSound('click'); setActiveTab('virus'); }}
+                    className={`px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm tracking-wide transition-all border ${activeTab === 'virus' ? 'bg-red-600/20 border-red-500 text-red-300 shadow-[0_0_15px_rgba(220,38,38,0.3)]' : 'bg-white/5 border-white/10 text-gray-500 hover:bg-white/10'}`}
+                >
+                    🦠 Virus Smash
+                </button>
+            </div>
         </div>
 
         {/* 📋 Scrollable List */}
-        {/* ✅ ปรับ Padding Mobile */}
         <div className="flex-1 overflow-y-auto px-3 py-2 md:px-4 md:py-2 custom-scrollbar space-y-1 relative pb-32">
-            
             {isLoading ? (
                 // --- Loading ---
                 <div className="flex flex-col items-center justify-center h-full gap-6 opacity-60">
@@ -241,6 +210,12 @@ export default function LeaderboardPage() {
                         <div className="w-12 h-12 border-4 border-cyan-500/30 border-t-cyan-500 rounded-full animate-spin"></div>
                     </div>
                     <p className="text-xs text-cyan-400 animate-pulse tracking-widest uppercase">Fetching Data...</p>
+                </div>
+            ) : leaderboard.length === 0 ? (
+                // --- Empty ---
+                <div className="flex flex-col items-center justify-center h-full gap-4 opacity-40">
+                    <div className="text-4xl">🏜️</div>
+                    <p className="text-sm text-gray-400">ยังไม่มีผู้เล่นในโหมดนี้</p>
                 </div>
             ) : (
                 // --- Loop ---
@@ -250,14 +225,12 @@ export default function LeaderboardPage() {
 
         {/* 👇 STICKY USER RANK (ลอยอยู่ด้านล่าง) 👇 */}
         {!isLoading && myRankIndex !== -1 && (
-            // ✅ ปรับตำแหน่ง Mobile: bottom-[4rem]
             <div className="absolute bottom-[3.5rem] md:bottom-[4.5rem] left-0 right-0 z-40 px-0 md:px-4">
                 {renderPlayerRow(leaderboard[myRankIndex], myRankIndex, true)}
             </div>
         )}
 
         {/* Footer Button */}
-        {/* ✅ ปรับ Padding Mobile */}
         <div className="shrink-0 p-3 md:p-4 bg-[#0a0a0a]/95 border-t border-white/10 relative z-50 backdrop-blur-md">
             <button 
                 onClick={() => { playSound('click'); router.push('/'); }} 
