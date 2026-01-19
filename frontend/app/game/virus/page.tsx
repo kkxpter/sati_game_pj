@@ -32,19 +32,29 @@ export default function VirusPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const bossTimerRef = useRef<number>(0);
 
-  // --- 🔥 SECTION 1: ฟังก์ชันบันทึกคะแนน ---
+  // --- 🔥 SECTION 1: ฟังก์ชันบันทึกคะแนน (แก้ไขแล้ว) ---
   const saveScore = async (finalScore: number) => {
     const userStr = localStorage.getItem('user');
     if (!userStr) return;
     const user = JSON.parse(userStr);
 
+    // 🔍 เช็คว่าใช้ id หรือ uid (Database คุณใช้ uid)
+    const userIdToSend = user.uid || user.id; 
+
+    if (!userIdToSend) {
+        console.error("❌ Error: ไม่พบ User ID ใน localStorage (ลอง Logout แล้ว Login ใหม่)");
+        return;
+    }
+
     try {
+        // ใช้ Localhost เพื่อความชัวร์
+        //const apiUrl = 'http://localhost:4000'; 
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
         await fetch(`${apiUrl}/scores/save`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                userId: user.id,
+                userId: userIdToSend, // ✅ ส่งค่าที่ถูกต้องไป
                 score: finalScore,
                 gameType: 'virus'
             })
@@ -57,16 +67,18 @@ export default function VirusPage() {
 
   // --- 🔥 SECTION 2: ระบบจบเกมอัตโนมัติ (แก้ไขแล้ว) ---
   useEffect(() => {
+    // ถ้าเลือดหมด และสถานะยังเล่นอยู่ (เพื่อกัน save ซ้ำ)
     if (hp <= 0 && view === 'playing') {
-        saveScore(score); 
+        saveScore(score); // บันทึกคะแนน
         
-        // ✅ ใส่ setTimeout แก้ Error Cascading Render
+        // ✅ ใช้ setTimeout 0 เพื่อแก้ Error "Cascading renders"
         const timeoutId = setTimeout(() => {
             setView('gameover');
         }, 0);
 
         return () => clearTimeout(timeoutId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hp, view, score]);
 
   // CSS Animation
@@ -88,24 +100,23 @@ export default function VirusPage() {
         animation: shake 0.5s;
         animation-iteration-count: 1;
     }
-    /* เพิ่มต่อจาก @keyframes shake */
-@keyframes flash {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
-}
-@keyframes scanline {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(100%); }
-}
-.animate-flash { animation: flash 0.1s infinite; }
-.scanline-effect {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to bottom, transparent, rgba(255, 0, 0, 0.1), transparent);
-    height: 10px;
-    width: 100%;
-    animation: scanline 2s linear infinite;
-}
+    @keyframes flash {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+    @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+    }
+    .animate-flash { animation: flash 0.1s infinite; }
+    .scanline-effect {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, transparent, rgba(255, 0, 0, 0.1), transparent);
+        height: 10px;
+        width: 100%;
+        animation: scanline 2s linear infinite;
+    }
   `;
 
   const triggerShake = () => {
@@ -120,14 +131,19 @@ export default function VirusPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [view]);
 
- useEffect(() => {
-    if (view !== 'gameover') return;
+  // 2. Stats Delay Effect
+  useEffect(() => {
+    if (view !== 'gameover') {
+        setShowStats(false); // รีเซ็ตค่าเมื่อไม่ได้อยู่หน้าจบเกม
+        return;
+    }
     const timer = setTimeout(() => {
         setShowStats(true);
     }, 3000); // 3 วินาทีตามที่ต้องการ
     return () => clearTimeout(timer);
-}, [view]);
-  // 2. Spawn Loop
+  }, [view]);
+
+  // 3. Spawn Loop
   useEffect(() => {
     if (view !== 'playing') return;
 
@@ -198,7 +214,7 @@ export default function VirusPage() {
       loopRef.current = setTimeout(spawn, spawnRate);
     };
 
-    // ✅ แก้ไข: ใช้ setTimeout 0 เพื่อไม่ให้ spawn ทำงาน sync เกินไปตอนเริ่ม
+    // ใช้ setTimeout 0 เพื่อไม่ให้ spawn ทำงาน sync เกินไปตอนเริ่ม
     const initialSpawn = setTimeout(spawn, 0);
     return () => { 
         clearTimeout(initialSpawn);
@@ -206,7 +222,7 @@ export default function VirusPage() {
     };
   }, [view, phase]); 
 
-  // 3. Click Handler
+  // 4. Click Handler
   const handleHit = (index: number) => {
     if (view !== 'playing') return;
     const type = grid[index];
@@ -235,7 +251,7 @@ export default function VirusPage() {
         triggerShake(); 
         playSound('wrong');
         newGrid[index] = 'exploding';
-        setHp(0); 
+        setHp(0); // ตั้งเลือดเป็น 0 เดี๋ยว useEffect จะจับได้เอง
     } else if (type === 'file') {
         triggerShake(); 
         playSound('wrong');
@@ -247,15 +263,7 @@ export default function VirusPage() {
         }, 300);
     }
 
-    
     setGrid(newGrid);
-
-
-   if (hp <= 0 || type === 'bomb') {
-    setShowStats(false); // ปิดคะแนนไว้ก่อนตั้งแต่ตอนนี้
-    setView('gameover');
-}
-
   };
 
   const startGame = () => {
@@ -267,11 +275,9 @@ export default function VirusPage() {
     setBossHp(0);
     bossTimerRef.current = 0;
     setGrid(Array(16).fill('empty'));
-    setShowStats(false); // มั่นใจว่าปิดคะแนนไว้ก่อนเล่นรอบใหม่
+    setShowStats(false); 
     setView('playing');
-};
-
- // Replace the return statement starting from line 235 with the following complete JSX:
+  };
 
   return (
     <div className={`relative h-screen w-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans transition-all ${isShaking ? 'animate-shake' : ''}`}>
@@ -417,46 +423,16 @@ export default function VirusPage() {
         </div>
        )}
     
+    {/* --- 3. GAMEOVER SCREEN (NEW DESIGN) --- */}
     {view === 'gameover' && (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden">
         
         {/* ✨ พื้นหลังหลัก (Layer 0) */}
         <div className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-1000 ${showStats ? 'opacity-100' : 'opacity-0'}`}></div>
-       {/* --- 3. GAMEOVER SCREEN --- */}
-       {view === 'gameover' && (
-           <div className="relative z-10 bg-black/60 backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] text-center max-w-sm w-full shadow-2xl animate-fade-in">
-               <div className="text-8xl mb-4 animate-bounce drop-shadow-xl">💥</div>
-               <h1 className="text-3xl font-black mb-2 uppercase tracking-wide text-red-500 drop-shadow-md">
-                   SYSTEM CRASHED
-               </h1>
-               
-               <div className="bg-white/5 rounded-xl p-4 mb-6 border border-white/10">
-                   <p className="text-gray-400 text-xs uppercase tracking-widest font-bold">เวลาที่รอด</p>
-                   <div className="text-white text-4xl font-mono font-black mb-2">{survivalTime} วินาที</div>
-                   <div className="w-full h-px bg-white/10 my-2"></div>
-                   <p className="text-gray-400 text-xs uppercase tracking-widest font-bold">คะแนนรวม</p>
-                   <div className="text-blue-300 text-5xl font-mono font-black">{score}</div>
-               </div>
 
-               <div className="flex gap-3">
-                   <button 
-                       onClick={() => { playSound('click'); router.push('/'); }} 
-                       className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-all"
-                   >
-                       กลับหน้าหลัก
-                   </button>
-                   <button 
-                       onClick={startGame} 
-                       className="flex-1 bg-green-500 hover:bg-green-400 text-black font-bold py-3 rounded-xl transition-all shadow-lg hover:scale-105"
-                   >
-                       เล่นใหม่
-                   </button>
-               </div>
-           </div>
-       )}
-=======
         {/* 🖼️ GIF พื้นหลัง (Layer 1) - จังหวะแรกใหญ่ จังหวะสองจางลง */}
         <div className={`absolute inset-0 z-10 flex items-center justify-center transition-all duration-1000 ease-in-out ${showStats ? 'opacity-20 scale-100' : 'opacity-100 scale-125'}`}>
+            {/* ตรวจสอบ path รูปภาพให้ถูกต้อง */}
             <img src="/images/Game_over.gif" alt="GameOver" className="w-full h-auto max-w-none" />
         </div>
 
@@ -521,9 +497,9 @@ export default function VirusPage() {
         </div>
     </div>
     )}
-    {/* Scanline Effect สำหรับเพิ่ม Texture */}
-        <div className={`scanline-effect z-20 transition-opacity duration-1000 ${showStats ? 'opacity-20' : 'opacity-0'}`}></div>
-    </div>
     
+    {/* Scanline Effect สำหรับเพิ่ม Texture */}
+    <div className={`scanline-effect z-20 transition-opacity duration-1000 ${showStats ? 'opacity-20' : 'opacity-0'}`}></div>
+    </div>
   );
 }
