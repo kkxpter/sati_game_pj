@@ -164,19 +164,20 @@ export default function HomePage() {
             
             {/* 1. ส่วน User Profile + Logout */}
             {user ? (
-              <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white shadow-inner">
-                  {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-gray-300 leading-none">Logged in as</span>
-                  <span className="text-sm font-bold text-white leading-none">{user.username}</span>
-                </div>
-                <button onClick={handleLogout} className="ml-2 p-1.5 rounded-full bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-all" title="Logout">
-                   <span className="h-4 w-4 inline-flex items-center justify-center">🚪</span>
-                </button>
-              </div>
-            ) : (
+              <button 
+    onClick={() => { playSound('click'); router.push('/profile'); }}
+    className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg hover:bg-white/20 transition-all group"
+  >
+    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white shadow-inner group-hover:scale-110 transition-transform">
+      {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
+    </div>
+    <div className="flex flex-col text-left">
+      <span className="text-[10px] text-gray-300 leading-none">View Profile</span>
+      <span className="text-sm font-bold text-white leading-none">{user.username}</span>
+    </div>
+    {/* ย้ายปุ่ม Logout ออกมาข้างนอก หรือไว้ข้างในก็ได้ตามเหมาะสม */}
+  </button>
+) : (
               <button 
                 onClick={() => router.push('/login')}
                 className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-2.5 rounded-full font-bold shadow-[0_0_20px_rgba(59,130,246,0.5)] hover:shadow-[0_0_30px_rgba(59,130,246,0.7)] transition-all transform hover:-translate-y-0.5"
