@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 
 export default function (prisma) {
     const router = express.Router();
-
+console.log("🔥 Auth Route Loaded! (Reset Password Ready)"); // 👈 เพิ่มบรรทัดนี้
     // ✅ API สมัครสมาชิก
     router.post('/register', async (req, res) => {
         const { username, password, email, phone, birthdate, address } = req.body;
@@ -81,6 +81,44 @@ export default function (prisma) {
 
         } catch (err) {
             res.status(500).json({ error: err.message });
+        }
+    });
+
+    router.post('/reset-password', async (req, res) => {
+        const { username, phone, newPassword } = req.body;
+
+        try {
+            // 1. ค้นหา User
+            console.log("1");console.log("1");
+            const user = await prisma.user.findFirst({
+                where: {
+                    username: username,
+                    phone: phone 
+                }
+            });
+            console.log("2");
+            if (!user) {
+                return res.status(404).json({ error: "ไม่พบข้อมูล หรือเบอร์โทรศัพท์ไม่ถูกต้อง" });
+            }
+            
+            // 2. แฮชรหัสผ่านใหม่
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+            // 3. อัปเดตลง Database
+            console.log("4");
+            await prisma.user.update({
+                where: { uid: user.uid }, 
+                data: { password: hashedPassword }
+            });
+            console.log("5");
+            res.json({ success: true, message: "เปลี่ยนรหัสผ่านสำเร็จ!" });
+
+        } catch (err) {
+            console.log("8");
+            // 👇 ตรงนี้สำคัญ! ให้ดู Error ตัวจริงที่หน้าจอดำ (Terminal) ของ Backend
+            console.error("Reset Password Error:", err); 
+            res.status(500).json({ error: err });
+
         }
     });
 
