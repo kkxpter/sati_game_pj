@@ -6,7 +6,6 @@ import { playSound } from '@/app/lib/sound';
 type CellState = 'empty' | 'virus' | 'bomb' | 'file' | 'exploding' | 'boss';
 type GameState = 'tutorial' | 'playing' | 'gameover';
 
-// ✅ ใช้ 4x4 (16 ช่อง) เหมือนเดิม
 const GRID_SIZE = 16; 
 const GRID_COLS = 'grid-cols-4'; 
 
@@ -25,15 +24,27 @@ export default function VirusPage() {
   const [isShaking, setIsShaking] = useState(false);
   const [bossHp, setBossHp] = useState(0);
 
+  // Phase 3 Warning States
+  const [isPhase3Warning, setIsPhase3Warning] = useState(false);
+  const [phase3Countdown, setPhase3Countdown] = useState(3);
+  const [hasEnteredPhase3, setHasEnteredPhase3] = useState(false);
+
   // Phase Logic
   let phase = 1;
-  if (survivalTime >= 40) phase = 3;
-  else if (survivalTime >= 20) phase = 2;
+  if (survivalTime >= 35) phase = 3;      
+  else if (survivalTime >= 15) phase = 2; 
 
   // Refs
   const loopRef = useRef<NodeJS.Timeout | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const bossTimerRef = useRef<number>(0);
+
+  // Helper: Format Time
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   // --- SAVE SCORE ---
   const saveScore = async (finalScore: number) => {
@@ -72,8 +83,31 @@ export default function VirusPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hp, view, score]);
 
+  // --- PHASE 3 WARNING LOGIC ---
+  useEffect(() => {
+      if (view === 'playing' && survivalTime === 35 && !hasEnteredPhase3) {
+          setHasEnteredPhase3(true);
+          setIsPhase3Warning(true);
+          setPhase3Countdown(3);
+          playSound('wrong'); 
+      }
+  }, [survivalTime, hasEnteredPhase3, view]);
+
+  useEffect(() => {
+      if (isPhase3Warning && phase3Countdown > 0) {
+          const timer = setTimeout(() => {
+              playSound('click'); 
+              setPhase3Countdown(prev => prev - 1);
+          }, 1000);
+          return () => clearTimeout(timer);
+      } else if (isPhase3Warning && phase3Countdown === 0) {
+          setIsPhase3Warning(false);
+      }
+  }, [isPhase3Warning, phase3Countdown]);
+
+
   // CSS Animation
-  const shakeStyle = `
+  const styles = `
     @keyframes shake {
         0% { transform: translate(1px, 1px) rotate(0deg); }
         10% { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -87,23 +121,26 @@ export default function VirusPage() {
         90% { transform: translate(1px, 2px) rotate(0deg); }
         100% { transform: translate(1px, -2px) rotate(-1deg); }
     }
-    .animate-shake {
-        animation: shake 0.5s;
-        animation-iteration-count: 1;
-    }
+    .animate-shake { animation: shake 0.5s; }
+    
     .scanline-effect {
-        position: absolute;
-        inset: 0;
+        position: absolute; inset: 0; pointer-events: none;
         background: linear-gradient(to bottom, transparent, rgba(255, 0, 0, 0.1), transparent);
-        height: 10px;
-        width: 100%;
+        height: 10px; width: 100%;
         animation: scanline 2s linear infinite;
-        pointer-events: none;
     }
     @keyframes scanline {
         0% { transform: translateY(-100%); }
         100% { transform: translateY(100%); }
     }
+
+    /* Countdown Animation */
+    @keyframes popIn {
+        0% { transform: scale(0.5); opacity: 0; }
+        50% { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop-in { animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
   `;
 
   const triggerShake = () => {
@@ -113,10 +150,10 @@ export default function VirusPage() {
 
   // Timer
   useEffect(() => {
-    if (view !== 'playing') return;
+    if (view !== 'playing' || isPhase3Warning) return; 
     timerRef.current = setInterval(() => setSurvivalTime(t => t + 1), 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [view]);
+  }, [view, isPhase3Warning]);
 
   // Show Stats Delay
   useEffect(() => {
@@ -126,19 +163,26 @@ export default function VirusPage() {
     }
     const timer = setTimeout(() => {
         setShowStats(true);
-    }, 3000);
+    }, 2500);
     return () => clearTimeout(timer);
   }, [view]);
 
-  // Spawn Logic
+  // ✅ SPAWN LOGIC (1.5, 2.0, 2.5)
   useEffect(() => {
-    if (view !== 'playing') return;
+    if (view !== 'playing' || isPhase3Warning) return;
 
-    let spawnRate = 1000;
-    let disappearRate = 2000;
+    // Phase 1 (เริ่ม): สบายๆ
+    let spawnRate = 1000;       
+    let disappearRate = 2500;  // 2.5 วินาที
 
-    if (phase === 2) { spawnRate = 700; disappearRate = 1500; } 
-    else if (phase === 3) { spawnRate = 450; disappearRate = 1000; }
+    if (phase === 2) { 
+        spawnRate = 750;       
+        disappearRate = 2000;  // 2.0 วินาที
+    } 
+    else if (phase === 3) { 
+        spawnRate = 500;       // โผล่ไว
+        disappearRate = 1500;  // 1.5 วินาที
+    }
 
     const spawn = () => {
       setGrid(prevGrid => {
@@ -155,12 +199,12 @@ export default function VirusPage() {
         let type: CellState = 'virus';
         let currentDisappearRate = disappearRate;
 
-        // Boss Logic
+        // Boss Condition
         if (!isBossActive && bossTimerRef.current > 20000 && r > 0.7) {
             type = 'boss';
             setBossHp(5);
             bossTimerRef.current = 0;
-            currentDisappearRate = 4000;
+            currentDisappearRate = 5000; 
         } 
         else {
             if (phase === 3) {
@@ -174,6 +218,7 @@ export default function VirusPage() {
 
         newGrid[randIdx] = type;
 
+        // Cleanup Logic
         setTimeout(() => {
              setGrid(currentGrid => {
                  if (currentGrid[randIdx] === type) { 
@@ -181,11 +226,11 @@ export default function VirusPage() {
                      nextGrid[randIdx] = 'empty';
                      
                      if (type === 'virus') {
-                         setHp(h => Math.max(0, h - 10));
+                         setHp(h => Math.max(0, h - 10)); 
                      } else if (type === 'boss') {
                          triggerShake();
                          playSound('wrong');
-                         setHp(h => Math.max(0, h - 100));
+                         setHp(h => Math.max(0, h - 100)); 
                      }
                      return nextGrid;
                  }
@@ -204,11 +249,11 @@ export default function VirusPage() {
         clearTimeout(initialSpawn);
         if (loopRef.current) clearTimeout(loopRef.current); 
     };
-  }, [view, phase]); 
+  }, [view, phase, isPhase3Warning]); 
 
-  // Click Handler (ปรับปรุงการคิดคะแนน)
+  // Click Handler
   const handleHit = (index: number) => {
-    if (view !== 'playing') return;
+    if (view !== 'playing' || isPhase3Warning) return; 
     const type = grid[index];
     if (type === 'empty' || type === 'exploding') return;
 
@@ -218,30 +263,29 @@ export default function VirusPage() {
         if (bossHp > 1) {
             playSound('click');
             setBossHp(prev => prev - 1);
-            setScore(s => s + 20); // ตีบอสทีละ 20
+            setScore(s => s + 20);
         } else {
             playSound('smash');
             newGrid[index] = 'empty';
-            setScore(s => s + 200); // ฆ่าบอส +200
+            setScore(s => s + 200);
             setHp(h => Math.min(200, h + 30));
             setBossHp(0);
         }
     } else if (type === 'virus') {
         playSound('smash');
         newGrid[index] = 'empty';
-        setScore(s => s + 10); // ไวรัสปกติ +10
+        setScore(s => s + 10);
     } else if (type === 'bomb') {
         triggerShake(); 
         playSound('wrong');
         newGrid[index] = 'exploding';
         setHp(0);
     } else if (type === 'file') {
-        // ✅ [แก้ไข] กดโดนไฟล์
         triggerShake(); 
         playSound('wrong');
         newGrid[index] = 'exploding';
-        setHp(h => Math.max(0, h - 30));    // หักเลือด
-        setScore(s => Math.max(0, s - 50)); // หักคะแนน 50 (ไม่ติดลบ)
+        setHp(h => Math.max(0, h - 30));
+        setScore(s => Math.max(0, s - 50));
         setTimeout(() => {
             setGrid(g => { const n = [...g]; n[index] = 'empty'; return n; });
         }, 300);
@@ -259,12 +303,15 @@ export default function VirusPage() {
     bossTimerRef.current = 0;
     setGrid(Array(GRID_SIZE).fill('empty'));
     setShowStats(false); 
+    setIsPhase3Warning(false);
+    setHasEnteredPhase3(false);
+    setPhase3Countdown(3);
     setView('playing');
   };
 
   return (
     <div className={`relative h-screen w-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans transition-all ${isShaking ? 'animate-shake' : ''}`}>
-       <style>{shakeStyle}</style>
+       <style>{styles}</style>
 
        {/* Background */}
        <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
@@ -324,26 +371,26 @@ export default function VirusPage() {
            </div>
        )}
 
-       {/* --- 2. GAMEPLAY SCREEN (4x4 แต่ขยายขนาด) --- */}
+       {/* --- 2. GAMEPLAY SCREEN (THAI UI) --- */}
        {view === 'playing' && (
-        <div className="relative z-10 w-full max-w-[500px] flex flex-col gap-6 animate-fade-in"> 
+        <div className="relative z-10 w-full max-w-[420px] flex flex-col gap-6 animate-fade-in"> 
             
             {/* Header Score Bar */}
-            <div className="flex justify-between items-center bg-black/40 p-4 md:p-6 rounded-3xl border border-white/10 backdrop-blur-xl shadow-lg">
+            <div className="flex justify-between items-center bg-black/40 p-4 rounded-3xl border border-white/10 backdrop-blur-xl shadow-lg">
                 <div className="text-center min-w-[70px]">
-                    <div className="text-[10px] md:text-xs text-gray-400 tracking-widest font-bold">TIME</div>
+                    <div className="text-[10px] md:text-xs text-gray-400 tracking-widest font-bold">เวลา</div>
                     <div className="text-2xl md:text-3xl font-mono text-white leading-none">{survivalTime}s</div>
                 </div>
                 <div className="flex flex-col items-center">
-                    <div className="text-[10px] md:text-xs text-purple-400 tracking-widest font-bold mb-2">THREAT LEVEL</div>
+                    <div className="text-[10px] md:text-xs text-purple-400 tracking-widest font-bold mb-2">ระดับภัยคุกคาม</div>
                     <div className="flex gap-2">
-                        <div className={`w-10 h-3 rounded-full transition-colors ${phase >= 1 ? 'bg-green-500 shadow-[0_0_10px_lime]' : 'bg-gray-700'}`}></div>
-                        <div className={`w-10 h-3 rounded-full transition-colors ${phase >= 2 ? 'bg-yellow-500 shadow-[0_0_10px_orange]' : 'bg-gray-700'}`}></div>
-                        <div className={`w-10 h-3 rounded-full transition-colors ${phase >= 3 ? 'bg-red-500 shadow-[0_0_10px_red] animate-pulse' : 'bg-gray-700'}`}></div>
+                        <div className={`w-8 h-2 md:w-10 md:h-3 rounded-full transition-colors ${phase >= 1 ? 'bg-green-500 shadow-[0_0_10px_lime]' : 'bg-gray-700'}`}></div>
+                        <div className={`w-8 h-2 md:w-10 md:h-3 rounded-full transition-colors ${phase >= 2 ? 'bg-yellow-500 shadow-[0_0_10px_orange]' : 'bg-gray-700'}`}></div>
+                        <div className={`w-8 h-2 md:w-10 md:h-3 rounded-full transition-colors ${phase >= 3 ? 'bg-red-500 shadow-[0_0_10px_red] animate-pulse' : 'bg-gray-700'}`}></div>
                     </div>
                 </div>
                 <div className="text-center min-w-[70px]">
-                    <div className="text-[10px] md:text-xs text-blue-400 tracking-widest font-bold">SCORE</div>
+                    <div className="text-[10px] md:text-xs text-blue-400 tracking-widest font-bold">คะแนน</div>
                     <div className="text-2xl md:text-3xl font-black text-blue-300 leading-none">{score}</div>
                 </div>
             </div>
@@ -351,10 +398,10 @@ export default function VirusPage() {
             {/* Health Bar */}
             <div className="relative w-full">
                 <div className="flex justify-between text-xs md:text-sm text-gray-400 mb-2 px-2 font-bold uppercase tracking-wider">
-                    <span>System Health</span>
+                    <span>สถานะระบบ</span>
                     <span>{hp}/200</span>
                 </div>
-                <div className="w-full bg-black/30 h-6 md:h-8 rounded-full overflow-hidden border border-white/10 shadow-inner relative">
+                <div className="w-full bg-black/30 h-3 md:h-4 rounded-full overflow-hidden border border-white/10 shadow-inner relative">
                     <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.2)_1px,transparent_1px)] bg-[size:10%_100%] z-10 pointer-events-none"></div>
                     <div 
                         className={`h-full transition-all duration-300 ${hp < 50 ? 'bg-red-500 shadow-[0_0_20px_red] animate-pulse' : 'bg-gradient-to-r from-green-500 to-emerald-400'}`} 
@@ -363,15 +410,15 @@ export default function VirusPage() {
                 </div>
             </div>
             
-            {/* ✅ GRID GAMEPLAY (4x4 แต่ขยายใหญ่) */}
-            <div className={`p-4 md:p-6 bg-black/60 backdrop-blur-md rounded-[2.5rem] border border-white/10 shadow-2xl transition-all duration-500 ${phase === 3 ? 'border-red-500/30 shadow-[0_0_30px_rgba(220,38,38,0.2)]' : ''}`}>
-                <div className={`grid ${GRID_COLS} gap-3 md:gap-4`}> 
+            {/* GRID */}
+            <div className={`p-4 bg-black/60 backdrop-blur-md rounded-[2rem] border border-white/10 shadow-2xl transition-all duration-500 ${phase === 3 ? 'border-red-500/30 shadow-[0_0_30px_rgba(220,38,38,0.2)]' : ''}`}>
+                <div className={`grid ${GRID_COLS} gap-3`}> 
                     {grid.map((cell, i) => (
                         <div 
                             key={i} 
                             className={`
                                 aspect-square rounded-2xl flex items-center justify-center cursor-pointer transition-all duration-100 select-none border relative overflow-hidden
-                                text-5xl md:text-7xl /* 👈 ขยายไอคอนให้ใหญ่สะใจ */
+                                text-4xl md:text-6xl
                                 ${cell === 'empty' ? 'bg-white/5 border-white/5 hover:bg-white/10' : ''}
                                 ${cell === 'virus' ? 'bg-red-500/20 border-red-500/50 hover:scale-100 active:scale-90 shadow-[0_0_20px_rgba(239,68,68,0.3)]' : ''}
                                 ${cell === 'bomb' ? 'bg-orange-500/20 border-orange-500/50 animate-pulse' : ''}
@@ -385,8 +432,8 @@ export default function VirusPage() {
                             {cell === 'virus' ? '🦠' : cell === 'bomb' ? '💣' : cell === 'file' ? '📁' : cell === 'exploding' ? '💥' : ''}
                             {cell === 'boss' && (
                                 <>
-                                    <span className="text-6xl md:text-8xl">👾</span>
-                                    <div className="absolute bottom-2 left-2 right-2 h-2 bg-gray-800 rounded-full overflow-hidden">
+                                    <span className="text-5xl md:text-7xl">👾</span>
+                                    <div className="absolute bottom-2 left-2 right-2 h-1.5 bg-gray-800 rounded-full overflow-hidden">
                                         <div className="h-full bg-purple-400 transition-all" style={{ width: `${(bossHp / 5) * 100}%` }}></div>
                                     </div>
                                 </>
@@ -396,9 +443,36 @@ export default function VirusPage() {
                 </div>
             </div>
 
+            {/* ✅ UPDATED: Phase 3 Warning (Grey Glass Theme with Thai) */}
+            {isPhase3Warning && (
+                <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-900/80 backdrop-blur-xl animate-fade-in">
+                    
+                    <div className="relative mb-8">
+                        <div className="w-32 h-32 md:w-48 md:h-48 rounded-full border-[6px] border-white/10 flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                            <div className="w-full h-full rounded-full border-t-[6px] border-white animate-spin absolute top-0 left-0"></div>
+                        </div>
+                        {/* 3 2 1 Countdown */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-7xl md:text-9xl font-black text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.5)] animate-pop-in">
+                                {phase3Countdown}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="text-center space-y-2">
+                        <h2 className="text-3xl md:text-5xl font-black text-white tracking-widest uppercase italic drop-shadow-md">
+                            ระยะวิกฤต
+                        </h2>
+                        <p className="text-gray-400 font-mono tracking-[0.2em] text-sm md:text-lg animate-pulse">
+                            เตรียมรับมือการโจมตี!
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {phase === 3 && (
                 <div className="text-center animate-pulse text-red-500 font-bold tracking-widest text-sm md:text-base bg-black/20 p-2 rounded-lg">
-                    ⚠️ DANGER LEVEL MAX! SPEED INCREASED! ⚠️
+                    ⚠️ อันตรายสูงสุด! เร่งความเร็วเต็มพิกัด! ⚠️
                 </div>
             )}
         </div>
@@ -408,63 +482,69 @@ export default function VirusPage() {
     {view === 'gameover' && (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden">
         
-        {/* ✨ พื้นหลังหลัก */}
-        <div className={`absolute inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-1000 ${showStats ? 'opacity-100' : 'opacity-0'}`}></div>
+        {/* ✨ พื้นหลัง */}
+        <div className={`absolute inset-0 bg-slate-950/80 backdrop-blur-lg transition-opacity duration-1000 ${showStats ? 'opacity-100' : 'opacity-0'}`}></div>
 
-        {/* 🖼️ GIF พื้นหลัง */}
-        <div className={`absolute inset-0 z-10 flex items-center justify-center transition-all duration-1000 ease-in-out ${showStats ? 'opacity-20 scale-100' : 'opacity-100 scale-125'}`}>
-            <img src="/images/Game_over.gif" alt="GameOver" className="w-full h-auto max-w-none" />
+        {/* 🖼️ GIF */}
+        <div className={`absolute inset-0 z-10 flex items-center justify-center transition-all duration-1000 ease-in-out ${showStats ? 'opacity-10 scale-100' : 'opacity-80 scale-110'}`}>
+            <img src="/images/Game_over.gif" alt="GameOver" className="w-full h-auto max-w-none opacity-50 mix-blend-screen" />
         </div>
 
-        {/* 📊 กล่องคะแนน */}
-        <div className={`relative z-30 w-full max-w-[400px] p-6 transition-all duration-700 transform ${showStats ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+        {/* 📊 กล่องคะแนนสวยๆ */}
+        <div className={`relative z-30 w-full max-w-[380px] p-4 transition-all duration-700 transform ${showStats ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
             
-            <div className="bg-[#1a1a2e]/90 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-2xl p-8 text-center border-t-white/20">
+            <div className="bg-[#0f172a]/95 backdrop-blur-2xl border border-white/10 rounded-[2rem] shadow-[0_0_50px_rgba(239,68,68,0.2)] p-6 text-center border-t-white/20 overflow-hidden relative">
                 
-                <div className="flex justify-center mb-4">
-                    <div className="relative">
-                        <span className="text-6xl drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] animate-bounce">💥</span>
-                    </div>
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-70"></div>
+
+                <div className="flex justify-center mb-2">
+                    <div className="text-6xl animate-bounce drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]">💥</div>
                 </div>
 
-                <h2 className="text-red-500 font-black text-2xl tracking-[0.15em] uppercase italic mb-1 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]">
-                    SYSTEM CRASHED
+                <h2 className="text-red-500 font-black text-3xl tracking-wide uppercase drop-shadow-md mb-1">
+                    ภารกิจล้มเหลว!
                 </h2>
-                <p className="text-red-400/60 text-[10px] font-mono mb-6 tracking-widest uppercase italic font-bold">
-                    ERROR_CODE: 0xDEADBEEF
+                <p className="text-gray-400 text-xs font-medium mb-6">
+                    ระบบเสียหายหนักจากการโจมตี
                 </p>
 
-                <div className="relative bg-black/40 border border-white/20 rounded-2xl p-6 mb-8 overflow-hidden shadow-inner">
-                    <div className="absolute top-2 left-2 w-4 h-4 border-t border-l border-white/40"></div>
-                    <div className="absolute bottom-2 right-2 w-4 h-4 border-b border-r border-white/40"></div>
+                {/* ✅ แยก Time & Score */}
+                <div className="flex flex-col gap-3 mb-6">
                     
-                    <div className="mb-4 border-b border-white/5 pb-4">
-                        <p className="text-gray-400 text-xs font-bold mb-1">เวลาที่รอด</p>
-                        <div className="text-white text-4xl font-black tracking-tight leading-none uppercase">
-                            {survivalTime} <span className="text-xl">วินาที</span>
+                    {/* Time Card */}
+                    <div className="bg-black/30 border border-cyan-500/20 rounded-xl p-3 flex items-center justify-between shadow-[inset_0_0_10px_rgba(6,182,212,0.1)]">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xl">⏱️</span>
+                            <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest">เวลาที่รอด</span>
+                        </div>
+                        <div className="text-3xl font-mono font-black text-cyan-300 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]">
+                            {formatTime(survivalTime)}
                         </div>
                     </div>
-                    
-                    <div>
-                        <p className="text-gray-400 text-xs font-bold mb-1">คะแนนรวม</p>
-                        <div className="text-cyan-400 text-5xl font-black drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]">
+
+                    {/* Score Card */}
+                    <div className="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border border-orange-500/20 rounded-xl p-4 flex flex-col items-center justify-center shadow-lg">
+                        <span className="text-[10px] text-orange-400 font-bold uppercase tracking-[0.2em] mb-1">คะแนนรวมสูงสุด</span>
+                        <div className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-orange-300 drop-shadow-[0_2px_10px_rgba(249,115,22,0.4)]">
                             {score.toLocaleString()}
                         </div>
                     </div>
+
                 </div>
 
-                <div className="flex gap-4">
+                {/* Buttons */}
+                <div className="flex gap-3">
                     <button 
                         onClick={() => { playSound('click'); router.push('/'); }} 
-                        className="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold py-4 rounded-2xl border border-white/10 transition-all active:scale-95 text-sm uppercase tracking-wider"
+                        className="flex-1 bg-white/5 hover:bg-white/10 text-gray-300 font-bold py-3 rounded-xl border border-white/10 transition-all active:scale-95 text-xs uppercase"
                     >
                         กลับหน้าหลัก
                     </button>
                     <button 
                         onClick={startGame} 
-                        className="flex-1 bg-gradient-to-br from-green-400 to-emerald-600 hover:from-green-300 hover:to-emerald-500 text-slate-950 font-black py-4 rounded-2xl shadow-[0_4px_20px_rgba(16,185,129,0.4)] transition-all active:scale-95 text-sm uppercase tracking-wider"
+                        className="flex-1 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-red-900/20 transition-all active:scale-95 text-xs uppercase flex items-center justify-center gap-2"
                     >
-                        เล่นใหม่
+                        <span>🔄</span> เล่นอีกครั้ง
                     </button>
                 </div>
             </div>
