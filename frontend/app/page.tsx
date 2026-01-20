@@ -10,6 +10,7 @@ import Image from 'next/image';
 // 1. เพิ่ม Interface
 interface UserData {
   username: string;
+  emoji?: string;
 }
 
 interface GameStats {
@@ -108,12 +109,14 @@ export default function HomePage() {
     };
   }, []);
 
-  const handleLogout = () => {
-    playSound('click');
-    localStorage.removeItem('user');
-    setUser(null);
-    router.push('/login');
-  };
+ const handleLogout = () => {
+  playSound('click');
+  if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) { // เพิ่ม Confirm
+      localStorage.removeItem('user');
+      setUser(null);
+      router.push('/login');
+  }
+};
 
   const handleStart = (mode: string) => {
     playSound('click');
@@ -164,19 +167,31 @@ export default function HomePage() {
             
             {/* 1. ส่วน User Profile + Logout */}
             {user ? (
-              <button 
-    onClick={() => { playSound('click'); router.push('/profile'); }}
-    className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg hover:bg-white/20 transition-all group"
-  >
-    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white shadow-inner group-hover:scale-110 transition-transform">
-      {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
-    </div>
-    <div className="flex flex-col text-left">
-      <span className="text-[10px] text-gray-300 leading-none">View Profile</span>
-      <span className="text-sm font-bold text-white leading-none">{user.username}</span>
-    </div>
-    {/* ย้ายปุ่ม Logout ออกมาข้างนอก หรือไว้ข้างในก็ได้ตามเหมาะสม */}
-  </button>
+  <div className="flex items-center gap-2"> {/* ครอบด้วย div เพื่อวาง 2 ปุ่มขนานกัน */}
+    {/* ปุ่ม Profile */}
+    <button 
+      onClick={() => { playSound('click'); router.push('/profile'); }}
+      className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg hover:bg-white/20 transition-all group"
+    >
+      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-lg shadow-inner group-hover:scale-110 transition-transform">
+        {/* ✅ แก้จากดึงตัวอักษร เป็นดึง Emoji ถ้าไม่มีให้ใช้ตัวแรกของชื่อ */}
+        {user.emoji ? user.emoji : (user.username ? user.username.charAt(0).toUpperCase() : 'U')}
+      </div>
+      <div className="flex flex-col text-left">
+        <span className="text-[10px] text-gray-300 leading-none">View Profile</span>
+        <span className="text-sm font-bold text-white leading-none">{user.username}</span>
+      </div>
+    </button>
+
+    {/* ✅ เพิ่มปุ่ม Logout (ไอคอนประตู) */}
+    <button 
+      onClick={handleLogout}
+      className="w-10 h-10 flex items-center justify-center bg-red-500/20 hover:bg-red-500 text-white border border-red-500/50 rounded-full transition-all shadow-lg active:scale-95"
+      title="ออกจากระบบ"
+    >
+      🚪
+    </button>
+  </div>
 ) : (
               <button 
                 onClick={() => router.push('/login')}
