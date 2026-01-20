@@ -10,6 +10,7 @@ import Image from 'next/image';
 // 1. เพิ่ม Interface
 interface UserData {
   username: string;
+  emoji?: string;
 }
 
 interface GameStats {
@@ -108,12 +109,14 @@ export default function HomePage() {
     };
   }, []);
 
-  const handleLogout = () => {
-    playSound('click');
-    localStorage.removeItem('user');
-    setUser(null);
-    router.push('/login');
-  };
+ const handleLogout = () => {
+  playSound('click');
+  if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) { // เพิ่ม Confirm
+      localStorage.removeItem('user');
+      setUser(null);
+      router.push('/login');
+  }
+};
 
   const handleStart = (mode: string) => {
     playSound('click');
@@ -164,19 +167,31 @@ export default function HomePage() {
             
             {/* 1. ส่วน User Profile + Logout */}
             {user ? (
-              <button 
-    onClick={() => { playSound('click'); router.push('/profile'); }}
-    className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg hover:bg-white/20 transition-all group"
-  >
-    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white shadow-inner group-hover:scale-110 transition-transform">
-      {user.username ? user.username.charAt(0).toUpperCase() : 'U'}
-    </div>
-    <div className="flex flex-col text-left">
-      <span className="text-[10px] text-gray-300 leading-none">View Profile</span>
-      <span className="text-sm font-bold text-white leading-none">{user.username}</span>
-    </div>
-    {/* ย้ายปุ่ม Logout ออกมาข้างนอก หรือไว้ข้างในก็ได้ตามเหมาะสม */}
-  </button>
+  <div className="flex items-center gap-2"> {/* ครอบด้วย div เพื่อวาง 2 ปุ่มขนานกัน */}
+    {/* ปุ่ม Profile */}
+    <button 
+      onClick={() => { playSound('click'); router.push('/profile'); }}
+      className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg hover:bg-white/20 transition-all group"
+    >
+      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-lg shadow-inner group-hover:scale-110 transition-transform">
+        {/* ✅ แก้จากดึงตัวอักษร เป็นดึง Emoji ถ้าไม่มีให้ใช้ตัวแรกของชื่อ */}
+        {user.emoji ? user.emoji : (user.username ? user.username.charAt(0).toUpperCase() : 'U')}
+      </div>
+      <div className="flex flex-col text-left">
+        <span className="text-[10px] text-gray-300 leading-none">View Profile</span>
+        <span className="text-sm font-bold text-white leading-none">{user.username}</span>
+      </div>
+    </button>
+
+    {/* ✅ เพิ่มปุ่ม Logout (ไอคอนประตู) */}
+    <button 
+      onClick={handleLogout}
+      className="w-10 h-10 flex items-center justify-center bg-red-500/20 hover:bg-red-500 text-white border border-red-500/50 rounded-full transition-all shadow-lg active:scale-95"
+      title="ออกจากระบบ"
+    >
+      🚪
+    </button>
+  </div>
 ) : (
               <button 
                 onClick={() => router.push('/login')}
@@ -200,54 +215,55 @@ export default function HomePage() {
       )}
 
       {/* --- VIEW 1: HOME MENU --- */}
-      {view === 'home' && (
-        <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden group/card">
-          
-          <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
-          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
+     {/* --- VIEW 1: HOME MENU --- */}
+{/* --- VIEW 1: HOME MENU --- */}
+{/* --- VIEW 1: HOME MENU --- */}
+{view === 'home' && (
+  <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden group/card">
+    
+    {/* เส้นขอบตกแต่งด้านบน-ล่าง */}
+    <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
+    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
 
-          <div className="flex flex-col items-center mb-1 relative">
-            
-            <div className="w-24 h-24 relative -mb-6 z-10 animate-bounce drop-shadow-[0_0_15px_rgba(167,139,250,0.9)]">
-                <Image 
-                    src="/images/mas.png" 
-                    alt="Mascot" 
-                    fill 
-                    className="object-contain" 
-                />
-            </div>
-            
-            <div className="relative w-[120%] -ml-4 h-56 drop-shadow-xl pointer-events-none">
-                <Image 
-                  src="/images/name_pj.png" 
-                  alt="SATI Project Name" 
-                  fill 
-                  className="object-contain" 
-                />
-            </div>
-            
+    {/* ==================== 🤖 ส่วนหัวขยายใหญ่ (Model02.gif) ==================== */}
+    <div className="flex flex-col items-center mb-4 relative">
+      
+      {/* ปรับความสูงเป็น h-80 (320px) หรือกำหนดเองเป็น h-[350px] 
+         เพิ่ม w-[130%] เพื่อให้ภาพล้นออกมาเล็กน้อยดูมีมิติเหมือนในรูปตัวอย่าง 
+      */}
+      <div className="relative w-[130%] h-[320px] -mt-8 drop-shadow-[0_0_25px_rgba(167,139,250,0.7)] transition-transform duration-500 hover:scale-105">
+        <Image 
+          src="/images/Model02.gif" 
+          alt="SATI Digital Mascot" 
+          fill 
+          className="object-contain" 
+          priority
+          unoptimized 
+        />
+      </div>
+      
+    </div>
+    {/* ============================================================ */}
+
+    <div className="flex flex-col gap-3 relative z-10">
+      {/* Quiz Mode */}
+      <button onClick={() => handleStart('normal')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-green-400/50 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]'}`}>
+        <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-green-500/20 border border-green-500/30 text-green-300 group-hover:scale-110'}`}>
+             {!user ? '🔒' : '🧠'}
           </div>
-
-          <div className="flex flex-col gap-3 relative z-10">
-            
-            {/* Quiz Mode */}
-            <button onClick={() => handleStart('normal')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-green-400/50 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]'}`}>
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="flex items-center gap-4 relative z-10">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-green-500/20 border border-green-500/30 text-green-300 group-hover:scale-110'}`}>
-                   {!user ? '🔒' : '🧠'}
-                </div>
-                <div className="text-left flex-1">
-                  <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-green-300'}`}>
-                    ตอบคำถามวัดกึ๋น
-                  </div>
-                  <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
-                    {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-green-400 font-bold">{stats.normal} รอบ</span></span>}
-                  </div>
-                </div>
-                <div className="text-green-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
-              </div>
-            </button>
+          <div className="text-left flex-1">
+            <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-green-300'}`}>
+              ตอบคำถามวัดกึ๋น
+            </div>
+            <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
+              {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-green-400 font-bold">{stats.normal} รอบ</span></span>}
+            </div>
+          </div>
+          <div className="text-green-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
+        </div>
+      </button>
 
             {/* Virus Mode */}
             <button onClick={() => handleStart('virus')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-red-400/50 hover:shadow-[0_0_20px_rgba(248,113,113,0.2)]'}`}>
