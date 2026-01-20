@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
 import Image from 'next/image';
 
-// 1. เพิ่ม Interface
+// 1. Interface
 interface UserData {
   username: string;
   emoji?: string;
@@ -43,7 +43,6 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    // ✅ ใช้ setTimeout เพื่อแก้ Error: Calling setState synchronously
     const timer = setTimeout(() => {
         // 1. โหลดข้อมูล User และ Stats
         try {
@@ -111,7 +110,7 @@ export default function HomePage() {
 
  const handleLogout = () => {
   playSound('click');
-  if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) { // เพิ่ม Confirm
+  if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) { 
       localStorage.removeItem('user');
       setUser(null);
       router.push('/login');
@@ -133,137 +132,127 @@ export default function HomePage() {
 
   const selectDifficulty = (diff: string) => {
     playSound('click');
-    // ✅ แก้ Path ให้ตรงกับโครงสร้างจริงของคุณ
-    console.log('Navigating to:', `/game/quiz?diff=${diff}`);
     window.location.href = `/game/quiz?diff=${diff}`;
   };
 
   return (
     <main className="relative w-screen h-screen flex flex-col items-center justify-center p-4 overflow-hidden bg-slate-900 font-sans">
       
-      {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอปลง) ✨ ==================== */}
+      {/* ==================== ✨ พื้นหลัง ✨ ==================== */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950"> 
-          
           <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
-              <div 
-                  className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
-                  style={{ backgroundImage: "url('/images/bg1.png')" }} 
-              ></div>
-              <div 
-                  className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
-                  style={{ backgroundImage: "url('/images/bg1.png')" }} 
-              ></div>
+              <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
+              <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
           </div>
-
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
-
           <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
           <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
       </div>
 
-      {/* ==================== 👤 User Profile & Leaderboard (มุมขวาบน) ==================== */}
+      {/* ==================== 👤 User Bar (มุมขวาบน - ปรับปรุงใหม่) ==================== */}
       {isLoaded && (
-          <div className="absolute top-4 right-4 z-50 animate-fade-in flex flex-col items-end gap-2">
-            
-            {/* 1. ส่วน User Profile + Logout */}
+          <div className="absolute top-6 right-6 z-50 animate-fade-in">
             {user ? (
-  <div className="flex items-center gap-2"> {/* ครอบด้วย div เพื่อวาง 2 ปุ่มขนานกัน */}
-    {/* ปุ่ม Profile */}
-    <button 
-      onClick={() => { playSound('click'); router.push('/profile'); }}
-      className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg hover:bg-white/20 transition-all group"
-    >
-      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-lg shadow-inner group-hover:scale-110 transition-transform">
-        {/* ✅ แก้จากดึงตัวอักษร เป็นดึง Emoji ถ้าไม่มีให้ใช้ตัวแรกของชื่อ */}
-        {user.emoji ? user.emoji : (user.username ? user.username.charAt(0).toUpperCase() : 'U')}
-      </div>
-      <div className="flex flex-col text-left">
-        <span className="text-[10px] text-gray-300 leading-none">View Profile</span>
-        <span className="text-sm font-bold text-white leading-none">{user.username}</span>
-      </div>
-    </button>
+               // ✨ รวมปุ่ม Profile และ Logout ไว้ในแคปซูลเดียวกัน (Glass Effect)
+               <div className="flex items-center bg-white/10 backdrop-blur-xl border border-white/20 rounded-full p-1.5 shadow-2xl hover:border-white/40 transition-all duration-300">
+                  
+                  {/* ส่วน Profile */}
+                  <button 
+                    onClick={() => { playSound('click'); router.push('/profile'); }}
+                    className="flex items-center gap-3 px-3 py-1.5 rounded-full hover:bg-white/10 transition-all group"
+                  >
+                    <div className="relative">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform duration-300">
+                            {user.emoji ? user.emoji : (user.username ? user.username.charAt(0).toUpperCase() : 'U')}
+                        </div>
+                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-900 rounded-full"></div>
+                    </div>
+                    <div className="flex flex-col text-left mr-2">
+                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Player</span>
+                        <span className="text-sm font-black text-white leading-none group-hover:text-purple-300 transition-colors">{user.username}</span>
+                    </div>
+                  </button>
 
-    {/* ✅ เพิ่มปุ่ม Logout (ไอคอนประตู) */}
-    <button 
-      onClick={handleLogout}
-      className="w-10 h-10 flex items-center justify-center bg-red-500/20 hover:bg-red-500 text-white border border-red-500/50 rounded-full transition-all shadow-lg active:scale-95"
-      title="ออกจากระบบ"
-    >
-      🚪
-    </button>
-  </div>
-) : (
+                  {/* เส้นกั้น */}
+                  <div className="w-px h-8 bg-white/20 mx-1"></div>
+
+                  {/* ส่วน Logout */}
+                  <button 
+                    onClick={handleLogout}
+                    className="w-10 h-10 flex items-center justify-center rounded-full text-red-400 hover:text-white hover:bg-red-500/80 transition-all duration-300"
+                    title="ออกจากระบบ"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                  </button>
+               </div>
+            ) : (
               <button 
                 onClick={() => router.push('/login')}
-                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-2.5 rounded-full font-bold shadow-[0_0_20px_rgba(59,130,246,0.5)] hover:shadow-[0_0_30px_rgba(59,130,246,0.7)] transition-all transform hover:-translate-y-0.5"
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-6 py-3 rounded-full font-bold shadow-[0_0_20px_rgba(59,130,246,0.5)] hover:shadow-[0_0_30px_rgba(59,130,246,0.7)] transition-all transform hover:-translate-y-0.5"
               >
                 <span>เข้าสู่ระบบเพื่อเล่น</span>
-                <span className="h-4 w-4 animate-pulse inline-flex items-center justify-center">➡️</span>
               </button>
             )}
 
-            {/* ✅ 2. ปุ่ม Leaderboard (แก้ Path ให้ตรง: /game/leaderboard) */}
-            <button 
-                onClick={() => { playSound('click'); router.push('/game/leaderboard'); }} 
-                className="flex items-center gap-2 px-4 py-2 bg-yellow-500/20 backdrop-blur-md rounded-full border border-yellow-500/40 text-yellow-200 hover:bg-yellow-500/30 hover:text-white transition-all text-xs font-bold shadow-lg group"
-            >
-                <span className="text-lg group-hover:scale-110 transition-transform">🏆</span>
-                <span>ดูอันดับคะแนน</span>
-            </button>
-
+            {/* ปุ่ม Leaderboard แยกออกมาเล็กน้อย */}
+            <div className="mt-2 flex justify-end">
+                 <button 
+                    onClick={() => { playSound('click'); router.push('/game/leaderboard'); }} 
+                    className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20 hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest shadow-lg"
+                >
+                    <span className="text-lg">🏆</span> Leaderboard
+                </button>
+            </div>
           </div>
       )}
 
-      {/* --- VIEW 1: HOME MENU --- */}
      {/* --- VIEW 1: HOME MENU --- */}
-{/* --- VIEW 1: HOME MENU --- */}
-{/* --- VIEW 1: HOME MENU --- */}
-{view === 'home' && (
-  <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_50px_rgba(0,0,0,0.3)] overflow-hidden group/card">
-    
-    {/* เส้นขอบตกแต่งด้านบน-ล่าง */}
-    <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
-    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
+      {view === 'home' && (
+        <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 animate-fade-in z-10 shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-visible group/card mt-10">
+          
+          {/* เส้นขอบตกแต่ง */}
+          <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
+          <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
 
-    {/* ==================== 🤖 ส่วนหัวขยายใหญ่ (Model02.gif) ==================== */}
-    <div className="flex flex-col items-center mb-4 relative">
-      
-      {/* ปรับความสูงเป็น h-80 (320px) หรือกำหนดเองเป็น h-[350px] 
-         เพิ่ม w-[130%] เพื่อให้ภาพล้นออกมาเล็กน้อยดูมีมิติเหมือนในรูปตัวอย่าง 
-      */}
-      <div className="relative w-[130%] h-[320px] -mt-8 drop-shadow-[0_0_25px_rgba(167,139,250,0.7)] transition-transform duration-500 hover:scale-105">
-        <Image 
-          src="/images/Model02.gif" 
-          alt="SATI Digital Mascot" 
-          fill 
-          className="object-contain" 
-          priority
-          unoptimized 
-        />
-      </div>
-      
-    </div>
-    {/* ============================================================ */}
+          {/* ==================== 🤖 ส่วนหัว Mascot ==================== */}
+          {/* 1. เปลี่ยน mb-6 เป็น mb-1 เพื่อลดระยะห่าง */}
+          <div className="flex flex-col items-center mb-1 relative z-20">
+            
+            <div className="relative w-[160%] h-[420px] -mt-36 drop-shadow-[0_0_40px_rgba(167,139,250,0.5)] transition-transform duration-700 hover:scale-105 pointer-events-none">
+              <Image 
+                src="/images/Model02.gif" 
+                alt="SATI Digital Mascot" 
+                fill 
+                className="object-contain" 
+                priority
+                unoptimized 
+              />
+            </div>
 
-    <div className="flex flex-col gap-3 relative z-10">
-      {/* Quiz Mode */}
-      <button onClick={() => handleStart('normal')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-green-400/50 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]'}`}>
-        <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <div className="flex items-center gap-4 relative z-10">
-          <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-green-500/20 border border-green-500/30 text-green-300 group-hover:scale-110'}`}>
-             {!user ? '🔒' : '🧠'}
           </div>
-          <div className="text-left flex-1">
-            <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-green-300'}`}>
-              ตอบคำถามวัดกึ๋น
-            </div>
-            <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
-              {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-green-400 font-bold">{stats.normal} รอบ</span></span>}
-            </div>
-          </div>
-          <div className="text-green-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
-        </div>
-      </button>
+
+          {/* ==================== ปุ่มกดเลือกโหมด ==================== */}
+          {/* 2. ใส่ -mt-16 เพื่อดึงปุ่มขึ้นไปปิดช่องว่าง (ถ้ายังห่างไปให้เพิ่มเป็น -mt-20) */}
+          <div className="flex flex-col gap-3 relative z-10 -mt-16">
+            
+            {/* Quiz Mode */}
+            <button onClick={() => handleStart('normal')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-green-400/50 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]'}`}>
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="flex items-center gap-4 relative z-10">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-green-500/20 border border-green-500/30 text-green-300 group-hover:scale-110'}`}>
+                    {!user ? '🔒' : '🧠'}
+                </div>
+                <div className="text-left flex-1">
+                  <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-green-300'}`}>
+                    ตอบคำถามวัดกึ๋น
+                  </div>
+                  <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
+                    {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>ชนะไปแล้ว: <span className="text-green-400 font-bold">{stats.normal} รอบ</span></span>}
+                  </div>
+                </div>
+                <div className="text-green-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
+              </div>
+            </button>
 
             {/* Virus Mode */}
             <button onClick={() => handleStart('virus')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-red-400/50 hover:shadow-[0_0_20px_rgba(248,113,113,0.2)]'}`}>
@@ -307,11 +296,11 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* --- VIEW 2: DIFFICULTY SELECTOR --- */}
+      {/* --- VIEW 2: DIFFICULTY SELECTOR (คงเดิมไว้) --- */}
       {view === 'bet' && (
         <div className="relative w-full max-w-sm bg-white/5 backdrop-blur-xl border border-white/15 rounded-[2rem] p-8 animate-fade-in z-10 shadow-[0_0_60px_rgba(0,0,0,0.4)]">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-1">เลือกความตึง</h2>
+          <div className="flex flex-col gap-3 relative z-10 -mt-8">
+            <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-4">เลือกความตึง</h2>
             <div className="w-16 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent mx-auto rounded-full"></div>
           </div>
           
@@ -323,13 +312,10 @@ export default function HomePage() {
                     <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-90 group-hover:scale-110">👶</span>
                     <div className="text-left">
                         <div className="font-bold text-white text-lg group-hover:text-green-300 transition-colors">อนุบาลหัดเดิน</div>
-                        <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">
-                            เวลา 20 วิ • ชิลๆ เหมือนเดินห้าง
-                        </div>
+                        <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">เวลา 20 วิ • ชิลๆ เหมือนเดินห้าง</div>
                     </div>
                 </div>
              </button>
-
              {/* Normal */}
              <button onClick={() => selectDifficulty('medium')} className="relative group w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-yellow-900/20 hover:border-yellow-400/30 transition-all duration-300 overflow-hidden">
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-yellow-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
@@ -337,13 +323,10 @@ export default function HomePage() {
                     <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-90 group-hover:scale-110">🧑‍🦱</span>
                     <div className="text-left">
                         <div className="font-bold text-white text-lg group-hover:text-yellow-300 transition-colors">มนุษย์เดินดิน</div>
-                        <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">
-                            เวลา 15 วิ • เริ่มตึงนิดๆ
-                        </div>
+                        <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">เวลา 15 วิ • เริ่มตึงนิดๆ</div>
                     </div>
                 </div>
              </button>
-
              {/* Hard */}
              <button onClick={() => selectDifficulty('hard')} className="relative group w-full p-4 rounded-xl bg-white/5 border border-white/10 hover:bg-red-900/20 hover:border-red-400/30 transition-all duration-300 overflow-hidden">
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 opacity-50 group-hover:opacity-100 transition-opacity"></div>
@@ -351,9 +334,7 @@ export default function HomePage() {
                     <span className="text-3xl filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-90 group-hover:scale-110 animate-pulse">⚡</span>
                     <div className="text-left">
                         <div className="font-bold text-white text-lg group-hover:text-red-300 transition-colors">เทพเจ้าสายฟ้า</div>
-                        <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">
-                            เวลา 10 วิ • กระพริบตาคือตุย
-                        </div>
+                        <div className="text-[10px] text-gray-400 uppercase tracking-wide group-hover:text-gray-200">เวลา 10 วิ • กระพริบตาคือตุย</div>
                     </div>
                 </div>
              </button>
@@ -368,7 +349,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ✅ ปุ่มเปิด/ปิดเสียง (อยู่ที่เดิม มุมขวาล่าง) */}
+      {/* ✅ ปุ่มเปิด/ปิดเสียง */}
       <button 
         onClick={toggleMute}
         className="absolute bottom-6 right-6 z-50 p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl hover:scale-110 transition-transform"
