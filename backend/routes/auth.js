@@ -1,16 +1,17 @@
-// routes/auth.js
+// backend/routes/auth.js
 import express from 'express';
 import bcrypt from 'bcrypt';
 
 export default function (prisma) {
     const router = express.Router();
-console.log("🔥 Auth Route Loaded! (Reset Password Ready)"); // 👈 เพิ่มบรรทัดนี้
-    // ✅ API สมัครสมาชิก
+    console.log("🔥 Auth Route Loaded! (Ready)"); 
+
+    // 1. Register (สมัครสมาชิก)
     router.post('/register', async (req, res) => {
         const { username, password, email, phone, birthdate, address } = req.body;
 
         try {
-            // 1. เช็คข้อมูลซ้ำ
+            // เช็คข้อมูลซ้ำ
             const existingUser = await prisma.user.findFirst({
                 where: {
                     OR: [
@@ -27,10 +28,10 @@ console.log("🔥 Auth Route Loaded! (Reset Password Ready)"); // 👈 เพิ
                 if (existingUser.phone === phone) return res.status(400).json({ error: "เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว!" });
             }
 
-            // 2. เข้ารหัสรหัสผ่าน
+            // เข้ารหัสรหัสผ่าน
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // 3. บันทึก (แปลง birthdate เป็น Date object ให้ถูกต้อง)
+            // บันทึกข้อมูล
             const newUser = await prisma.user.create({
                 data: {
                     username,
@@ -42,8 +43,14 @@ console.log("🔥 Auth Route Loaded! (Reset Password Ready)"); // 👈 เพิ
                 }
             });
 
-            // ✅ แก้ตรงนี้: ใน Schema คุณใช้ชื่อ "id" ไม่ใช่ "uid"
-            res.json({ message: "สมัครสมาชิกเรียบร้อย!", userId: newUser.uid });
+            // ✅ ถูกต้อง: ส่ง uid กลับไป
+            res.json({ 
+                message: "สมัครสมาชิกเรียบร้อย!", 
+                user: { 
+                    uid: newUser.uid, 
+                    username: newUser.username 
+                } 
+            });
 
         } catch (err) {
             console.error(err);
@@ -51,7 +58,7 @@ console.log("🔥 Auth Route Loaded! (Reset Password Ready)"); // 👈 เพิ
         }
     });
 
-    // ✅ API เข้าสู่ระบบ
+    // 2. Login (เข้าสู่ระบบ)
     router.post('/login', async (req, res) => {
         const { username, password } = req.body;
 
@@ -59,6 +66,7 @@ console.log("🔥 Auth Route Loaded! (Reset Password Ready)"); // 👈 เพิ
             const user = await prisma.user.findUnique({
                 where: { username: username }
             });
+            console.log("🔥 DATA FROM DB:", user);
 
             if (!user) {
                 return res.status(401).json({ error: "ไม่พบชื่อผู้ใช้นี้" });
@@ -66,10 +74,12 @@ console.log("🔥 Auth Route Loaded! (Reset Password Ready)"); // 👈 เพิ
 
             const match = await bcrypt.compare(password, user.password);
             if (match) {
+                // ✅ ถูกต้อง: ส่ง uid กลับไปให้ Frontend เก็บ
+                console.log("✅ LOGIN DEBUG: Found User ID =", user.uid);
                 res.json({
                     success: true,
                     user: {
-                        id: user.id, // ✅ ใช้ id
+                        uid: user.uid, // 👈 จุดสำคัญคือตรงนี้ (ต้องเป็น uid)
                         username: user.username,
                         email: user.email,
                         phone: user.phone
@@ -80,45 +90,39 @@ console.log("🔥 Auth Route Loaded! (Reset Password Ready)"); // 👈 เพิ
             }
 
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            console.error(err);
+            res.status(500).json({ error: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ" });
         }
     });
 
+    // 3. Reset Password (เปลี่ยนรหัสผ่าน)
     router.post('/reset-password', async (req, res) => {
         const { username, phone, newPassword } = req.body;
 
         try {
-            // 1. ค้นหา User
-            console.log("1");console.log("1");
             const user = await prisma.user.findFirst({
                 where: {
                     username: username,
                     phone: phone 
                 }
             });
-            console.log("2");
+            
             if (!user) {
                 return res.status(404).json({ error: "ไม่พบข้อมูล หรือเบอร์โทรศัพท์ไม่ถูกต้อง" });
             }
             
-            // 2. แฮชรหัสผ่านใหม่
             const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-            // 3. อัปเดตลง Database
-            console.log("4");
             await prisma.user.update({
-                where: { uid: user.uid }, 
+                where: { uid: user.uid }, // ✅ ถูกต้อง: ใช้ uid ในการอ้างอิง
                 data: { password: hashedPassword }
             });
-            console.log("5");
+            
             res.json({ success: true, message: "เปลี่ยนรหัสผ่านสำเร็จ!" });
 
         } catch (err) {
-            console.log("8");
-            // 👇 ตรงนี้สำคัญ! ให้ดู Error ตัวจริงที่หน้าจอดำ (Terminal) ของ Backend
             console.error("Reset Password Error:", err); 
-            res.status(500).json({ error: err });
-
+            res.status(500).json({ error: "เปลี่ยนรหัสผ่านไม่สำเร็จ" });
         }
     });
 

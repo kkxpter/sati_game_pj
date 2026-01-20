@@ -15,9 +15,13 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    // ✅ 1. ดึง URL (ถ้าไม่มีใน .env ให้ใช้ localhost)
+    // ✅ 1. ใช้ URL Server (ถ้าเล่นในเครื่องให้ใช้ localhost ถ้าขึ้น server ใช้ vercel)
+    // แนะนำ: ตอนเทสแก้บั๊ก ให้ใช้ http://localhost:4000 ก่อนจะดีที่สุดครับ
+    // ✅ แก้ตรงนี้: ให้ดึงจาก Env ก่อน ถ้าไม่มีค่อยใช้ localhost
+    // (เวลาขึ้น Server จริง มันจะดึงจาก Env ที่เราตั้งไว้)
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+    console.log("🌐 Connecting to API:", apiUrl); // เช็คดูว่ามันยิงไปไหน
     try {
       const res = await fetch(`${apiUrl}/login`, {
         method: 'POST',
@@ -34,21 +38,48 @@ export default function LoginPage() {
         throw new Error(data.error || 'เข้าสู่ระบบไม่สำเร็จ');
       }
 
-      // ✅ 2. ถ้าสำเร็จ บันทึก User และไปหน้าแรก
-      localStorage.setItem('user', JSON.stringify(data.user));
+      console.log("✅ Login API Response:", data);
+
+      // ==========================================
+      // 🚨 จุดที่แก้: รับได้ทั้ง uid และ id
+      // ==========================================
+      
+      // 1. เช็คว่ามี user object ไหม
+      if (!data.user) {
+          throw new Error("Server ไม่ส่งข้อมูล User กลับมา");
+      }
+
+      // 2. พยายามดึง ID ออกมา (ไม่ว่าจะชื่อ uid หรือ id)
+      const serverUserId = data.user.uid || data.user.id;
+
+      // 3. ถ้าไม่มีสักตัว ค่อย Error
+      if (!serverUserId) {
+          console.error("User Data ที่ได้:", data.user);
+          throw new Error("Server ส่ง User มา แต่ไม่มี ID (หาไม่เจอทั้ง uid และ id)");
+      }
+
+      // 4. สร้าง object ที่สมบูรณ์เพื่อบันทึก
+      const userDataToSave = {
+          uid: serverUserId,        // บังคับให้ชื่อ uid เสมอในเครื่องเรา
+          id: serverUserId,         // เผื่อไว้
+          username: data.user.username,
+          email: data.user.email,
+          phone: data.user.phone
+      };
+
+      // 5. บันทึก
+      localStorage.setItem('user', JSON.stringify(userDataToSave));
+      console.log("💾 Saved to LocalStorage:", userDataToSave);
+
       window.location.href = '/'; 
 
     } catch (err: unknown) { 
       console.error("Login Error:", err);
-      
-      // แปลง err ให้เป็น Error object เพื่อดึง message
       if (err instanceof Error) {
         setError(err.message);
       } else {
         setError('เชื่อมต่อ Server ไม่ได้');
       }
-
-      // ✅ แก้ไข: ต้องสั่งหยุดโหลดเมื่อเกิด Error ปุ่มถึงจะกดใหม่ได้
       setIsLoading(false);
     }
   };

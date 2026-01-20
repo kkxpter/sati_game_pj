@@ -26,6 +26,7 @@ interface ApiResponse {
 }
 
 interface UserData {
+    uid: number;
     id: number;
     username: string;
 }
@@ -193,30 +194,40 @@ function QuizContent() {
 
   // ใน QuizContent function ...
 
-const finishGame = async () => { // 1. ใส่ async
+const finishGame = async () => { 
       setGameState('finished');
       playSound('correct'); 
       if (audioRef.current) {
           audioRef.current.pause();
       }
 
-      // ✅ 2. เพิ่มส่วนบันทึกคะแนน (เฉพาะโหมดยาก ตามที่คุยกัน)
+      // ✅ 2. เพิ่มส่วนบันทึกคะแนน (เฉพาะโหมดยาก)
       if (currentUser && diff === 'hard') {
           try {
               const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+              
+              // 🔍 Log ดูหน่อยว่าส่งอะไรไป
+              const userIdToSend = currentUser.uid || currentUser.id;
+              console.log("📤 Sending Score:", { userId: userIdToSend, score });
+
+              if (!userIdToSend) {
+                  console.error("❌ Error: User ID Missing!");
+                  return;
+              }
+
               await fetch(`${apiUrl}/scores/save`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                      userId: currentUser.id, // ตรวจสอบว่าใน Interface UserData มี id หรือ uid (ถ้าใน DB เป็น uid ให้แก้ตรงนี้เป็น currentUser.uid)
+                      userId: userIdToSend, // ✅ แก้เป็นตัวแปรที่ดึงมาแล้วชัวร์ๆ
                       score: score,
                       gameType: 'quiz',
                       difficulty: 'hard'
                   })
               });
-              console.log("Quiz Score Saved!");
+              console.log("✅ Quiz Score Saved!");
           } catch (e) {
-              console.error("Save score error", e);
+              console.error("❌ Save score error", e);
           }
       }
   };
