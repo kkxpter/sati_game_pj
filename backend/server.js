@@ -7,6 +7,7 @@ const { PrismaClient } = pkg;
 import authRoute from './routes/auth.js';
 import questionRoute from './routes/questions.js';
 import scoreRoute from './routes/score.js';
+import scoreRoute from './routes/user.js';
 const app = express();
 const prisma = new PrismaClient();
 const port = 4000;
@@ -31,6 +32,7 @@ console.log('✅ Server is ready with Prisma...');
 app.use('/', authRoute(prisma));       
 app.use('/questions', questionRoute(prisma)); 
 app.use('/scores', scoreRoute(prisma));
+app.use('/user', userRouter(prisma));
 // สำหรับ Local Development
 if (process.env.NODE_ENV !== 'production') {
   app.listen(port, () => {

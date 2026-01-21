@@ -83,12 +83,14 @@ export default function VirusPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hp, view, score]);
 
-  // --- PHASE 3 WARNING LOGIC ---
+  // --- PHASE 3 WARNING LOGIC (แก้ไขตรงนี้) ---
   useEffect(() => {
       if (view === 'playing' && survivalTime === 35 && !hasEnteredPhase3) {
           setHasEnteredPhase3(true);
           setIsPhase3Warning(true);
           setPhase3Countdown(3);
+          // ✅ เพิ่มบรรทัดนี้: ล้างกระดานทันที เพื่อไม่ให้ของเก่าระเบิดใส่
+          setGrid(Array(GRID_SIZE).fill('empty')); 
           playSound('wrong'); 
       }
   }, [survivalTime, hasEnteredPhase3, view]);
@@ -221,6 +223,7 @@ export default function VirusPage() {
         // Cleanup Logic
         setTimeout(() => {
              setGrid(currentGrid => {
+                 // ตรวจสอบอีกทีว่าช่องนั้นยังเป็น type เดิมอยู่ไหม (ถ้าโดนล้างกระดานไปแล้วจะเป็น empty)
                  if (currentGrid[randIdx] === type) { 
                      const nextGrid = [...currentGrid];
                      nextGrid[randIdx] = 'empty';

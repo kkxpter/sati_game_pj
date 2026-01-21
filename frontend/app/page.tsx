@@ -249,6 +249,7 @@ export default function HomePage() {
           <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
           <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
 
+          {/* ส่วน Mascot (z-20) */}
           <div className="flex flex-col items-center relative z-20">
             <div className="relative w-[160%] h-[360px] -mt-28 drop-shadow-[0_0_40px_rgba(167,139,250,0.5)] transition-transform duration-700 hover:scale-105 pointer-events-none">
               <Image 
@@ -260,10 +261,12 @@ export default function HomePage() {
                 unoptimized 
               />
             </div>
-            
           </div>
 
-          <div className="flex flex-col gap-3 relative z-10 -mt-4">
+          {/* ✅ แก้ไขตรงนี้: เปลี่ยน z-10 เป็น z-30 เพื่อให้ปุ่มอยู่เหนือรูปภาพ */}
+          <div className="flex flex-col gap-3 relative z-30 -mt-4">
+            
+            {/* ... (ปุ่มต่างๆ เหมือนเดิม) ... */}
             <button onClick={() => handleStart('normal')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-green-400/50 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]'}`}>
               <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="flex items-center gap-4 relative z-10">
@@ -281,41 +284,44 @@ export default function HomePage() {
                 <div className="text-green-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
               </div>
             </button>
-
+            
+            {/* ... ปุ่มอื่นๆ ... */}
             <button onClick={() => handleStart('virus')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-red-400/50 hover:shadow-[0_0_20px_rgba(248,113,113,0.2)]'}`}>
-              <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="flex items-center gap-4 relative z-10">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-red-500/20 border border-red-500/30 text-red-300 group-hover:scale-110'}`}>
-                   {!user ? '🔒' : '🔨'}
+                {/* ... เนื้อหาปุ่ม ... */}
+                <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="flex items-center gap-4 relative z-10">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-red-500/20 border border-red-500/30 text-red-300 group-hover:scale-110'}`}>
+                    {!user ? '🔒' : '🔨'}
+                    </div>
+                    <div className="text-left flex-1">
+                    <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-red-300'}`}>
+                        ทุบไวรัสวัดนิ้ว
+                    </div>
+                    <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
+                        {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>โหมดแอคชั่น: <span className="text-red-400 font-bold">มันส์มาก!</span></span>}
+                    </div>
+                    </div>
+                    <div className="text-red-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
                 </div>
-                <div className="text-left flex-1">
-                  <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-red-300'}`}>
-                    ทุบไวรัสวัดนิ้ว
-                  </div>
-                  <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
-                    {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>โหมดแอคชั่น: <span className="text-red-400 font-bold">มันส์มาก!</span></span>}
-                  </div>
-                </div>
-                <div className="text-red-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
-              </div>
             </button>
 
             <button onClick={() => handleStart('chat')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(96,165,250,0.2)]'}`}>
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="flex items-center gap-4 relative z-10">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-blue-500/20 border border-blue-500/30 text-blue-300 group-hover:scale-110'}`}>
-                   {!user ? '🔒' : '💬'}
+                {/* ... เนื้อหาปุ่ม ... */}
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="flex items-center gap-4 relative z-10">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-blue-500/20 border border-blue-500/30 text-blue-300 group-hover:scale-110'}`}>
+                    {!user ? '🔒' : '💬'}
+                    </div>
+                    <div className="text-left flex-1">
+                    <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-blue-300'}`}>
+                        แชทปั่นแก๊งคอล
+                    </div>
+                    <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
+                        {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>สถานะการหลอกลวง</span>}
+                    </div>
+                    </div>
+                    <div className="text-blue-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
                 </div>
-                <div className="text-left flex-1">
-                  <div className={`font-bold text-lg transition-colors ${!user ? 'text-gray-400' : 'text-white group-hover:text-blue-300'}`}>
-                    แชทปั่นแก๊งคอล
-                  </div>
-                  <div className="text-[10px] text-gray-400 flex items-center gap-1 group-hover:text-gray-200">
-                    {!user ? <span className="text-amber-400 font-bold">ต้องเข้าสู่ระบบก่อน</span> : <span>สถานะการหลอกลวง</span>}
-                  </div>
-                </div>
-                <div className="text-blue-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
-              </div>
             </button>
 
           </div>

@@ -5,32 +5,35 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
 
+// ... (Interfaces และ Icons เหมือนเดิม ไม่ต้องแก้) ...
 // 1. Interfaces
 interface UserData {
+  uid?: number;
+  id?: number;
   username: string;
   emoji?: string;
   password?: string;
 }
 
 interface GameStats {
-  normal: number;
-  virus: number;
-  chat: number;
+  normal: number; 
+  virus: number;  
+  chat: number;   
 }
 
-// 2. Icons
 const Icons = {
-  User: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-  Lock: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
-  LogOut: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
-  Home: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  Trophy: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
-  Zap: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
-  Message: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>,
-  Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  User: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  Lock: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+  LogOut: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
+  Home: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  Trophy: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+  Zap: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  Message: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>,
+  Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
 };
 
-const EMOJI_OPTIONS = ['🧠', '🎮', '🔥', '⚡', '🐱', '🤖', '👻', '💎', '🦊', '👾'];
+const EMOJI_OPTIONS = ['🧠', '🎮', '🔥', '⚡', '🐱', '🤖', '👻', '💎', '🦊', '👾', '👽', '🦄', '💀', '🤡', '🌟'];
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -39,6 +42,7 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<GameStats>({ normal: 0, virus: 0, chat: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
   const [editMode, setEditMode] = useState<'none' | 'info' | 'password'>('none');
+  const [isLoading, setIsLoading] = useState(false); // เพิ่ม state สำหรับ Loading
   
   const [tempUsername, setTempUsername] = useState('');
   const [tempEmoji, setTempEmoji] = useState('🧠');
@@ -46,22 +50,51 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  // fetchGameStats (เหมือนเดิม)
+  const fetchGameStats = async (userId: number) => {
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        const res = await fetch(`${apiUrl}/scores/stats?userId=${userId}`);
+        
+        if (res.ok) {
+            const data = await res.json();
+            setStats({
+                normal: data.quiz || 0,
+                virus: data.virus || 0,
+                chat: data.chat || 0
+            });
+        } else {
+            console.warn("API Error, falling back to local storage");
+            const savedStatsStr = localStorage.getItem('cyberStakes_played');
+            if (savedStatsStr) setStats(JSON.parse(savedStatsStr));
+        }
+    } catch (error) {
+        console.error("Failed to fetch stats:", error);
+        const savedStatsStr = localStorage.getItem('cyberStakes_played');
+        if (savedStatsStr) setStats(JSON.parse(savedStatsStr));
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       const storedUserStr = localStorage.getItem('user');
-      const savedStatsStr = localStorage.getItem('cyberStakes_played');
       
       if (storedUserStr) {
         const userData = JSON.parse(storedUserStr);
         setUser(userData);
         setTempUsername(userData.username);
         setTempEmoji(userData.emoji || '🧠');
+
+        const uid = userData.uid || userData.id;
+        if (uid) {
+            fetchGameStats(uid);
+        } else {
+            const savedStatsStr = localStorage.getItem('cyberStakes_played');
+            if (savedStatsStr) setStats(JSON.parse(savedStatsStr));
+        }
+
       } else {
         router.push('/login');
-      }
-
-      if (savedStatsStr) {
-        setStats(JSON.parse(savedStatsStr));
       }
       
       setIsLoaded(true);
@@ -80,14 +113,16 @@ export default function ProfilePage() {
     localStorage.setItem('user', JSON.stringify(updatedUser));
     setUser(updatedUser);
     setEditMode('none');
-    alert('บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว');
   };
 
-  const handleSavePassword = () => {
+  // 🔥🔥🔥 แก้ไขฟังก์ชันนี้: ยิง API ไปเช็คกับ Database 🔥🔥🔥
+  const handleSavePassword = async () => {
     playSound('click');
     if (!user) return;
-    if (user.password && currentPasswordInput !== user.password) {
-        alert('รหัสผ่านปัจจุบันไม่ถูกต้อง!');
+
+    // 1. ตรวจสอบข้อมูลเบื้องต้นที่ Frontend ก่อน
+    if (!currentPasswordInput) {
+        alert('กรุณากรอกรหัสผ่านปัจจุบัน');
         return;
     }
     if (newPassword !== confirmPassword) {
@@ -98,13 +133,47 @@ export default function ProfilePage() {
       alert('รหัสผ่านใหม่สั้นเกินไป (ต้อง 4 ตัวขึ้นไป)!');
       return;
     }
-    const updatedUser = { ...user, password: newPassword };
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setCurrentPasswordInput('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setEditMode('none');
-    alert('เปลี่ยนรหัสผ่านสำเร็จ!');
+
+    setIsLoading(true); // เริ่มโหลด
+
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        
+        // 2. ส่งข้อมูลไปที่ Backend (ต้องแก้ userId ให้ตรงกับ Route ที่สร้างไว้ เช่น /user/change-password)
+        const res = await fetch(`${apiUrl}/user/change-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: user.uid || user.id, // ส่ง UID ไปเช็ค
+                currentPassword: currentPasswordInput,
+                newPassword: newPassword
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            // 3. ถ้าสำเร็จ อัปเดต LocalStorage
+            const updatedUser = { ...user, password: newPassword };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            
+            // เคลียร์ค่าในฟอร์ม
+            setCurrentPasswordInput('');
+            setNewPassword('');
+            setConfirmPassword('');
+            setEditMode('none');
+            alert('เปลี่ยนรหัสผ่านสำเร็จ!');
+        } else {
+            // 4. ถ้าไม่สำเร็จ (เช่น รหัสเดิมผิด) แจ้งเตือนจากข้อความที่ Server ส่งมา
+            alert(data.error || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
+        }
+
+    } catch (error) {
+        console.error("Change password error:", error);
+        alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+    } finally {
+        setIsLoading(false); // จบการโหลด
+    }
   };
 
   const handleLogout = () => {
@@ -118,10 +187,9 @@ export default function ProfilePage() {
   if (!isLoaded) return <div className="min-h-screen bg-slate-950" />;
 
   return (
-    // ✅ 1. Layout Fix: ใช้ py-12 และเอา justify-center ออก เพื่อแก้ปัญหาจอบังเมื่อเนื้อหายาว
-    <main className="relative min-h-screen w-full flex flex-col items-center py-12 px-4 font-sans text-slate-200">
+    <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 font-sans text-slate-200 overflow-hidden">
       
-      {/* ==================== ✨ Fixed Background (พื้นหลังไม่เลื่อนตาม) ✨ ==================== */}
+      {/* ... (Background ส่วนเดิม) ... */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-slate-950"></div>
         <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
@@ -129,104 +197,88 @@ export default function ProfilePage() {
             <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
-        <div className="absolute top-[10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
       </div>
 
-      {/* ==================== 🎫 Content Area ==================== */}
-      <div className="relative z-30 w-full max-w-md animate-fade-in">
-        
-        {/* ✅ 2. Transparency Fix: ปรับสีพื้นหลังให้ทึบขึ้น (bg-slate-900/90) */}
-        <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl overflow-hidden relative">
+      <div className="relative z-30 w-full max-w-md animate-fade-in-up">
+        <div className="bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-80"></div>
             
-            {/* Decorative Line */}
-            <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
-            
-            <div className="flex flex-col items-center gap-6 relative z-10">
+            <div className="p-6 md:p-8 flex flex-col items-center gap-6 relative z-10">
                 
-                {/* --- Avatar Display --- */}
+                <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 uppercase tracking-widest drop-shadow-sm">
+                    โปรไฟล์
+                </h1>
+
+                {/* ... (Avatar Section เหมือนเดิม) ... */}
                 <div className="relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-full blur opacity-60 group-hover:opacity-100 transition duration-500"></div>
-                    <div className="relative w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-purple-500 to-blue-500">
+                    <div className="absolute -inset-4 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition duration-500 animate-pulse-slow"></div>
+                    <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full p-[3px] bg-gradient-to-tr from-purple-400 via-white/50 to-blue-400">
                         <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-6xl shadow-inner relative overflow-hidden">
-                            <span className="drop-shadow-lg transform group-hover:scale-110 transition-transform duration-300">
+                            <span className="drop-shadow-lg transform group-hover:scale-110 transition-transform duration-300 select-none">
                                 {editMode === 'info' ? tempEmoji : user?.emoji}
                             </span>
                             <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/10 to-transparent rounded-t-full pointer-events-none"></div>
                         </div>
                     </div>
-                    <div className="absolute bottom-2 right-2 w-5 h-5 bg-green-500 rounded-full border-4 border-slate-900 shadow-md"></div>
                 </div>
 
-                {/* --- View Mode: Stats --- */}
+                {/* ... (Stats View เหมือนเดิม) ... */}
                 {editMode === 'none' && user && (
                     <div className="w-full text-center animate-fade-in space-y-6">
-                        <div>
-                            <h2 className="text-3xl font-black text-white tracking-tight">{user.username}</h2>
-                            <div className="inline-block mt-2 px-3 py-1 rounded-full bg-white/5 border border-white/10">
-                                <span className="text-[10px] text-purple-300 uppercase tracking-widest font-bold">
-                                    ✨ สมาชิกผู้เล่นทั่วไป
-                                </span>
-                            </div>
+                        <div className="space-y-1">
+                            <h2 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 tracking-tight drop-shadow-sm truncate px-4">
+                                {user.username}
+                            </h2>
                         </div>
-
-                        {/* Stats Grid */}
-                        <div className="grid grid-cols-3 gap-2 w-full mt-2">
-                            {/* Quiz */}
-                            <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-green-500/10 hover:border-green-500/30 transition-all group cursor-default">
-                                <div className="w-10 h-10 rounded-lg bg-green-500/20 border border-green-500/30 flex items-center justify-center text-green-300 mb-2 group-hover:scale-110 transition-transform">
+                        <div className="grid grid-cols-3 gap-3 w-full">
+                            <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-green-500/10 to-transparent border border-green-500/20 relative group hover:bg-green-500/5 transition-all">
+                                <div className="text-green-400 mb-1 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]">
                                     <Icons.Trophy />
                                 </div>
-                                <div className="text-center">
-                                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Quiz</div>
-                                    <div className="text-lg font-black text-white">{stats.normal} <span className="text-[10px] font-normal text-gray-500">วิน</span></div>
-                                </div>
+                                <div className="text-[10px] text-green-200/80 font-bold tracking-wider">ตอบคำถาม</div>
+                                <div className="text-xl font-black text-white">{stats.normal} <span className="text-[9px] font-normal text-gray-400">ครั้ง</span></div>
                             </div>
-                            {/* Virus */}
-                            <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500/10 hover:border-red-500/30 transition-all group cursor-default">
-                                <div className="w-10 h-10 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-300 mb-2 group-hover:scale-110 transition-transform">
+                            <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-red-500/10 to-transparent border border-red-500/20 relative group hover:bg-red-500/5 transition-all">
+                                <div className="text-red-400 mb-1 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(248,113,113,0.5)]">
                                     <Icons.Zap />
                                 </div>
-                                <div className="text-center">
-                                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Virus</div>
-                                    <div className="text-lg font-black text-white">{stats.virus} <span className="text-[10px] font-normal text-gray-500">แต้ม</span></div>
-                                </div>
+                                <div className="text-[10px] text-red-200/80 font-bold tracking-wider">ทุบไวรัส</div>
+                                <div className="text-xl font-black text-white">{stats.virus} <span className="text-[9px] font-normal text-gray-400">ครั้ง</span></div>
                             </div>
-                            {/* Chat */}
-                            <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-blue-500/10 hover:border-blue-500/30 transition-all group cursor-default">
-                                <div className="w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-300 mb-2 group-hover:scale-110 transition-transform">
+                            <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-blue-500/10 to-transparent border border-blue-500/20 relative group hover:bg-blue-500/5 transition-all">
+                                <div className="text-blue-400 mb-1 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]">
                                     <Icons.Message />
                                 </div>
-                                <div className="text-center">
-                                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Chat</div>
-                                    <div className="text-lg font-black text-white">{stats.chat} <span className="text-[10px] font-normal text-gray-500">รอด</span></div>
-                                </div>
+                                <div className="text-[10px] text-blue-200/80 font-bold tracking-wider">แชทปั่น</div>
+                                <div className="text-xl font-black text-white">{stats.chat} <span className="text-[9px] font-normal text-gray-400">ครั้ง</span></div>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* --- Edit Info Form --- */}
+                {/* ... (Edit Info Form เหมือนเดิม) ... */}
                 {editMode === 'info' && (
-                    <div className="w-full space-y-5 animate-slide-up text-left">
+                    <div className="w-full space-y-5 animate-slide-up text-left bg-white/5 p-4 rounded-2xl border border-white/5">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-300 ml-1">ชื่อที่ใช้แสดง (Display Name)</label>
+                            <label className="text-xs font-bold text-gray-300 ml-1">ชื่อที่ใช้แสดง</label>
                             <input 
                                 type="text" 
                                 value={tempUsername} 
                                 onChange={(e) => setTempUsername(e.target.value)}
-                                className="w-full bg-slate-800 border border-white/10 focus:border-purple-500/50 text-white p-4 rounded-xl outline-none focus:ring-2 ring-purple-500/20 transition-all placeholder:text-gray-600"
+                                className="w-full bg-black/40 border border-white/10 focus:border-purple-500/50 text-white p-3 rounded-xl outline-none focus:ring-2 ring-purple-500/20 transition-all placeholder:text-gray-600"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-300 ml-1">เลือกรูปอวตาร (Select Avatar)</label>
-                            <div className="grid grid-cols-5 gap-2 p-2 bg-slate-800 rounded-xl border border-white/10">
+                            <label className="text-xs font-bold text-gray-300 ml-1">เลือกอวตาร</label>
+                            <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                                 {EMOJI_OPTIONS.map(e => (
                                     <button 
                                         key={e} 
                                         onClick={() => setTempEmoji(e)} 
-                                        className={`aspect-square text-2xl rounded-lg flex items-center justify-center transition-all duration-200 ${
-                                            tempEmoji === e ? 'bg-purple-600 shadow-lg scale-110' : 'hover:bg-white/10 opacity-70 hover:opacity-100'
+                                        className={`aspect-square text-2xl rounded-lg flex items-center justify-center transition-all duration-200 border ${
+                                            tempEmoji === e 
+                                            ? 'bg-purple-600/80 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)] scale-105' 
+                                            : 'bg-white/5 border-transparent hover:bg-white/10'
                                         }`}
                                     >
                                         {e}
@@ -234,96 +286,88 @@ export default function ProfilePage() {
                                 ))}
                             </div>
                         </div>
-                        <button onClick={handleSaveInfo} className="w-full py-3.5 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold text-white shadow-lg shadow-purple-900/40 hover:shadow-purple-900/60 transition-all flex items-center justify-center gap-2">
-                            <Icons.Check /> บันทึกการเปลี่ยนแปลง
+                        <button onClick={handleSaveInfo} className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95">
+                            <Icons.Check /> บันทึกข้อมูล
                         </button>
                     </div>
                 )}
 
-                {/* --- Edit Password Form --- */}
+                {/* --- 4. Edit Password Form (ปรับปรุงใหม่ให้ disable ปุ่มตอน loading) --- */}
                 {editMode === 'password' && (
-                    <div className="w-full space-y-4 animate-slide-up text-left">
-                        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs text-center mb-2">
-                            🔒 กรุณายืนยันรหัสผ่านเดิมก่อนตั้งรหัสใหม่
+                    <div className="w-full space-y-4 animate-slide-up text-left bg-white/5 p-4 rounded-2xl border border-white/5">
+                        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs text-center flex items-center justify-center gap-2">
+                            <Icons.Lock /> ยืนยันรหัสเดิมก่อนตั้งใหม่
                         </div>
                         
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">รหัสผ่านปัจจุบัน</label>
-                            <input 
-                                type="password" 
-                                value={currentPasswordInput} 
-                                onChange={(e) => setCurrentPasswordInput(e.target.value)}
-                                className="w-full bg-slate-800 border border-white/10 focus:border-amber-500/50 text-white p-3.5 rounded-xl outline-none focus:ring-2 ring-amber-500/20 transition-all"
-                            />
+                        <div className="space-y-3">
+                            <div>
+                                <input 
+                                    type="password" 
+                                    placeholder="รหัสผ่านปัจจุบัน"
+                                    value={currentPasswordInput} 
+                                    onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 focus:border-amber-500/50 text-white p-3 rounded-xl outline-none focus:ring-2 ring-amber-500/20 transition-all placeholder:text-gray-500 text-sm"
+                                />
+                            </div>
+                            <div className="h-px bg-white/10 mx-2"></div>
+                            <div className="space-y-2">
+                                <input 
+                                    type="password" 
+                                    placeholder="รหัสผ่านใหม่"
+                                    value={newPassword} 
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 focus:border-red-500/50 text-white p-3 rounded-xl outline-none focus:ring-2 ring-red-500/20 transition-all placeholder:text-gray-500 text-sm"
+                                />
+                                <input 
+                                    type="password" 
+                                    placeholder="ยืนยันรหัสผ่านใหม่"
+                                    value={confirmPassword} 
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="w-full bg-black/40 border border-white/10 focus:border-red-500/50 text-white p-3 rounded-xl outline-none focus:ring-2 ring-red-500/20 transition-all placeholder:text-gray-500 text-sm"
+                                />
+                            </div>
                         </div>
-
-                        <div className="h-px bg-white/10 my-2"></div>
-
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">รหัสผ่านใหม่</label>
-                            <input 
-                                type="password" 
-                                value={newPassword} 
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                className="w-full bg-slate-800 border border-white/10 focus:border-red-500/50 text-white p-3.5 rounded-xl outline-none focus:ring-2 ring-red-500/20 transition-all"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">ยืนยันรหัสผ่านใหม่</label>
-                            <input 
-                                type="password" 
-                                value={confirmPassword} 
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full bg-slate-800 border border-white/10 focus:border-red-500/50 text-white p-3.5 rounded-xl outline-none focus:ring-2 ring-red-500/20 transition-all"
-                            />
-                        </div>
-                        <button onClick={handleSavePassword} className="w-full py-3.5 mt-2 bg-red-600 hover:bg-red-500 rounded-xl font-bold text-white shadow-lg shadow-red-900/40 hover:shadow-red-900/60 transition-all flex items-center justify-center gap-2">
-                            <Icons.Lock /> อัปเดตรหัสผ่าน
+                        <button 
+                            onClick={handleSavePassword} 
+                            disabled={isLoading}
+                            className={`w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            {isLoading ? 'กำลังบันทึก...' : <><Icons.Check /> อัปเดตรหัสผ่าน</>}
                         </button>
                     </div>
                 )}
 
-                {/* --- Menu Buttons --- */}
-                <div className="w-full flex flex-col gap-3 pt-5 border-t border-white/10 mt-2">
+                {/* --- 5. Menu List Buttons (เหมือนเดิม) --- */}
+                <div className="w-full flex flex-col gap-2 pt-2">
                     {editMode === 'none' ? (
                         <>
-                            {/* Edit Info */}
-                            <button onClick={() => setEditMode('info')} className="relative group w-full p-3 rounded-xl bg-white/5 border border-white/10 hover:border-purple-400/50 hover:shadow-[0_0_20px_rgba(168,85,247,0.2)] transition-all overflow-hidden">
-                                <div className="flex items-center gap-3 relative z-10">
-                                    <div className="w-10 h-10 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 group-hover:scale-110 transition-transform">
+                            <button onClick={() => setEditMode('info')} className="group w-full p-3.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all flex items-center justify-between active:scale-[0.98]">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-purple-500/20 text-purple-300">
                                         <Icons.User />
                                     </div>
-                                    <div className="text-left flex-1 font-bold text-gray-300 group-hover:text-white">แก้ไขข้อมูลส่วนตัว</div>
-                                    <div className="text-purple-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">→</div>
+                                    <span className="font-bold text-sm text-gray-200 group-hover:text-white">แก้ไขข้อมูลส่วนตัว</span>
                                 </div>
+                                <div className="text-gray-500 group-hover:text-white transition-colors"><Icons.ChevronRight /></div>
                             </button>
 
-                            {/* Change Password */}
-                            <button onClick={() => setEditMode('password')} className="relative group w-full p-3 rounded-xl bg-white/5 border border-white/10 hover:border-yellow-400/50 hover:shadow-[0_0_20px_rgba(234,179,8,0.2)] transition-all overflow-hidden">
-                                <div className="flex items-center gap-3 relative z-10">
-                                    <div className="w-10 h-10 rounded-lg bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center text-yellow-300 group-hover:scale-110 transition-transform">
+                            <button onClick={() => setEditMode('password')} className="group w-full p-3.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all flex items-center justify-between active:scale-[0.98]">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-yellow-500/20 text-yellow-300">
                                         <Icons.Lock />
                                     </div>
-                                    <div className="text-left flex-1 font-bold text-gray-300 group-hover:text-white">เปลี่ยนรหัสผ่าน</div>
-                                    <div className="text-yellow-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">→</div>
+                                    <span className="font-bold text-sm text-gray-200 group-hover:text-white">เปลี่ยนรหัสผ่าน</span>
                                 </div>
+                                <div className="text-gray-500 group-hover:text-white transition-colors"><Icons.ChevronRight /></div>
                             </button>
 
-                            {/* Back to Home */}
-                            <button onClick={() => router.push('/')} className="relative group w-full p-3 rounded-xl bg-slate-800/50 border border-white/10 hover:border-white/30 hover:bg-slate-800 transition-all overflow-hidden mt-1">
-                                <div className="flex items-center gap-3 relative z-10">
-                                    <div className="w-10 h-10 rounded-lg bg-gray-700/50 border border-gray-600 flex items-center justify-center text-gray-300 group-hover:text-white group-hover:scale-110 transition-transform">
-                                        <Icons.Home />
-                                    </div>
-                                    <div className="text-left flex-1 font-bold text-gray-300 group-hover:text-white">กลับสู่เมนูหลัก</div>
-                                    <div className="text-white opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all">→</div>
-                                </div>
+                            <button onClick={() => router.push('/')} className="group w-full p-3.5 mt-2 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 border border-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98] shadow-lg">
+                                <span className="text-gray-300 group-hover:text-white font-bold text-sm"><Icons.Home /></span>
+                                <span className="font-bold text-sm text-gray-300 group-hover:text-white">กลับสู่เมนูหลัก</span>
                             </button>
 
-                            {/* Logout */}
-                            <button onClick={handleLogout} className="w-full py-2 text-[10px] text-red-400 font-bold uppercase tracking-[0.1em] hover:text-red-300 transition-all text-center mt-4 opacity-60 hover:opacity-100 flex items-center justify-center gap-2">
-                                <Icons.LogOut />
-                                <span>ออกจากระบบ</span>
+                            <button onClick={handleLogout} className="w-full py-2 mt-2 text-xs text-red-400/70 hover:text-red-400 font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                                <Icons.LogOut /> ออกจากระบบ
                             </button>
                         </>
                     ) : (
