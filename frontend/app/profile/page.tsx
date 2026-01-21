@@ -18,7 +18,7 @@ interface GameStats {
   chat: number;
 }
 
-// 2. Icons
+// 2. Icons (เหมือนเดิม)
 const Icons = {
   User: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   Lock: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
@@ -118,11 +118,14 @@ export default function ProfilePage() {
   if (!isLoaded) return <div className="min-h-screen bg-slate-950" />;
 
   return (
-    // ✅ 1. Layout Fix: ใช้ py-12 และเอา justify-center ออก เพื่อแก้ปัญหาจอบังเมื่อเนื้อหายาว
-    <main className="relative min-h-screen w-full flex flex-col items-center py-12 px-4 font-sans text-slate-200">
+    // ✅ แก้ไข Layout:
+    // - min-h-screen: ให้สูงอย่างน้อยเท่าจอ แต่ยืดได้ถ้ายาวกว่า
+    // - overflow-y-auto: ให้มี Scrollbar ถ้าเนื้อหายาวเกิน
+    // - justify-start: เริ่มวางเนื้อหาจากด้านบน (ไม่กึ่งกลางแนวตั้ง) ป้องกันหัว/ท้ายขาดในจอเล็ก
+    <main className="relative min-h-screen w-full flex flex-col items-center justify-start py-8 px-4 font-sans text-slate-200 overflow-y-auto">
       
-      {/* ==================== ✨ Fixed Background (พื้นหลังไม่เลื่อนตาม) ✨ ==================== */}
-      <div className="fixed inset-0 z-0">
+      {/* ==================== ✨ Fixed Background (พื้นหลังนิ่ง) ✨ ==================== */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-slate-950"></div>
         <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
             <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
@@ -134,10 +137,11 @@ export default function ProfilePage() {
       </div>
 
       {/* ==================== 🎫 Content Area ==================== */}
-      <div className="relative z-30 w-full max-w-md animate-fade-in">
+      {/* ใช้ mb-8 เพื่อเว้นระยะล่างให้ Scroll ลงไปสุดได้สวยๆ */}
+      <div className="relative z-30 w-full max-w-md mb-8 animate-fade-in">
         
-        {/* ✅ 2. Transparency Fix: ปรับสีพื้นหลังให้ทึบขึ้น (bg-slate-900/90) */}
-        <div className="bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl overflow-hidden relative">
+        {/* สีพื้นหลังทึบขึ้น: bg-slate-900/95 */}
+        <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl overflow-hidden relative">
             
             {/* Decorative Line */}
             <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
