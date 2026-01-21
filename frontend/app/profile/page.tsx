@@ -21,6 +21,10 @@ interface GameStats {
   chat: number;   
 }
 
+<<<<<<< HEAD
+=======
+// 2. Icons (เหมือนเดิม)
+>>>>>>> 3f7d73541c5842a0794b70034462738c03af5786
 const Icons = {
   User: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   Lock: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
@@ -187,10 +191,21 @@ export default function ProfilePage() {
   if (!isLoaded) return <div className="min-h-screen bg-slate-950" />;
 
   return (
+<<<<<<< HEAD
     <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 font-sans text-slate-200 overflow-hidden">
       
       {/* ... (Background ส่วนเดิม) ... */}
       <div className="fixed inset-0 z-0">
+=======
+    // ✅ แก้ไข Layout:
+    // - min-h-screen: ให้สูงอย่างน้อยเท่าจอ แต่ยืดได้ถ้ายาวกว่า
+    // - overflow-y-auto: ให้มี Scrollbar ถ้าเนื้อหายาวเกิน
+    // - justify-start: เริ่มวางเนื้อหาจากด้านบน (ไม่กึ่งกลางแนวตั้ง) ป้องกันหัว/ท้ายขาดในจอเล็ก
+    <main className="relative min-h-screen w-full flex flex-col items-center justify-start py-8 px-4 font-sans text-slate-200 overflow-y-auto">
+      
+      {/* ==================== ✨ Fixed Background (พื้นหลังนิ่ง) ✨ ==================== */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+>>>>>>> 3f7d73541c5842a0794b70034462738c03af5786
         <div className="absolute inset-0 bg-slate-950"></div>
         <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
             <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
@@ -199,9 +214,18 @@ export default function ProfilePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
       </div>
 
+<<<<<<< HEAD
       <div className="relative z-30 w-full max-w-md animate-fade-in-up">
         <div className="bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-80"></div>
+=======
+      {/* ==================== 🎫 Content Area ==================== */}
+      {/* ใช้ mb-8 เพื่อเว้นระยะล่างให้ Scroll ลงไปสุดได้สวยๆ */}
+      <div className="relative z-30 w-full max-w-md mb-8 animate-fade-in">
+        
+        {/* สีพื้นหลังทึบขึ้น: bg-slate-900/95 */}
+        <div className="bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl overflow-hidden relative">
+>>>>>>> 3f7d73541c5842a0794b70034462738c03af5786
             
             <div className="p-6 md:p-8 flex flex-col items-center gap-6 relative z-10">
                 
