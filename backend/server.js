@@ -1,44 +1,39 @@
 import express from 'express';
-import cors from 'cors'; // ✅ 1. ต้องมีตัวนี้
-import pkg from '@prisma/client';
-const { PrismaClient } = pkg;
+import cors from 'cors';
+import { PrismaClient } from '@prisma/client'; // ใช้แบบนี้ได้เลยถ้า Node เวอร์ชั่นใหม่
 
 // นำเข้า Routes
 import authRoute from './routes/auth.js';
 import questionRoute from './routes/questions.js';
 import scoreRoute from './routes/score.js';
-import scoreRoute from './routes/user.js';
+import userRoute from './routes/user.js'; // ✅ 1. แก้ชื่อตรงนี้เป็น userRoute (อย่าใช้ scoreRoute ซ้ำ)
+
 const app = express();
 const prisma = new PrismaClient();
 const port = 4000;
 
-// ------------------------------------------------------------------
-// ✅ แก้ไขจุดที่ 1: ใช้ CORS แบบเปิดหมด (Allow All) เพื่อตัดปัญหา
-// และต้องวางไว้บรรทัดแรกๆ ทันทีหลังสร้าง app
-// ------------------------------------------------------------------
+// CORS Config
 app.use(cors({
-  origin: "*", // อนุญาตทุกเว็บ (แก้ขัดไปก่อน รับรองผ่านชัวร์)
+  origin: "*", 
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-app.use(express.json()); // ต้องอยู่หลัง cors
+app.use(express.json());
 
 console.log('✅ Server is ready with Prisma...');
 
-// ------------------------------------------------------------------
-// ✅ แก้ไขจุดที่ 2: ส่ง prisma เข้าไปใน Route
-// ------------------------------------------------------------------
+// ใช้งาน Routes
 app.use('/', authRoute(prisma));       
 app.use('/questions', questionRoute(prisma)); 
 app.use('/scores', scoreRoute(prisma));
-app.use('/user', userRouter(prisma));
-// สำหรับ Local Development
+app.use('/user', userRoute(prisma)); // ✅ 2. ตรงนี้ต้องเรียก userRoute (ตามที่ import มา)
+
+// Start Server
 if (process.env.NODE_ENV !== 'production') {
   app.listen(port, () => {
     console.log(`🚀 Server running on http://localhost:${port}`);
   });
 }
 
-// สำหรับ Vercel (ต้อง export default app)
 export default app;
