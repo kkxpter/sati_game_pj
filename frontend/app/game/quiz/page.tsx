@@ -1,5 +1,5 @@
 ﻿'use client';
-import { useState, useEffect, useMemo, useCallback,useRef, Suspense } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
 import Link from 'next/link';
@@ -26,16 +26,9 @@ interface ApiResponse {
 }
 
 interface UserData {
-    uid: number;
-    id: number;
-    username: string;
-}
-
-interface LeaderboardEntry {
-    username: string;
-    score: number;
-    isMe: boolean;
-    avatar: string;
+  uid: number;
+  id: number;
+  username: string;
 }
 
 // --- Config ---
@@ -45,22 +38,13 @@ const GAME_CONFIG: Record<string, { time: number; score: number; color: string }
   hard: { time: 10, score: 40, color: 'text-red-400' },
 };
 
-const MOCK_BOTS = [
-    { username: 'CyberNinja', score: 350, avatar: '🥷' },
-    { username: 'GlitchH.', score: 280, avatar: '👾' },
-    { username: 'NeonSamu', score: 220, avatar: '👺' },
-    { username: 'BitBot', score: 180, avatar: '🤖' },
-    { username: 'CodeMaster', score: 150, avatar: '👨‍💻' },
-    { username: 'BugHunter', score: 100, avatar: '🕷️' },
-];
-
 const RANK_SYSTEM = [
-    { percent: 100, icon: "👑", title: "เทพเจ้าไอที", desc: "สุดยอด! มิจฉาชีพกราบ", color: "text-purple-400", border: "border-purple-500", bg: "from-purple-500/20" },
-    { percent: 80,  icon: "🛡️", title: "ผู้พิทักษ์", desc: "สกิลตึงเปรี้ยะ!", color: "text-blue-400", border: "border-blue-500", bg: "from-blue-500/20" },
-    { percent: 60,  icon: "🔫", title: "มือปราบ", desc: "เริ่มเก๋าเกมแล้วนะ", color: "text-green-400", border: "border-green-500", bg: "from-green-500/20" },
-    { percent: 40,  icon: "🐢", title: "เน็ตเต่า", desc: "มีความรู้บ้าง... ระวังหน่อย", color: "text-yellow-400", border: "border-yellow-500", bg: "from-yellow-500/20" },
-    { percent: 20,  icon: "🎣", title: "มือไว", desc: "ใจเย็นๆ นะวัยรุ่น", color: "text-orange-400", border: "border-orange-500", bg: "from-orange-500/20" },
-    { percent: 0,   icon: "🍼", title: "เบบี้", desc: "กลับไปดื่มนมก่อนลูก", color: "text-gray-400", border: "border-gray-500", bg: "from-gray-500/20" },
+  { percent: 100, icon: "👑", title: "เทพเจ้าไอที", desc: "สุดยอด! มิจฉาชีพกราบ", color: "text-purple-400", border: "border-purple-500", bg: "from-purple-500/20" },
+  { percent: 80,  icon: "🛡️", title: "ผู้พิทักษ์", desc: "สกิลตึงเปรี้ยะ!", color: "text-blue-400", border: "border-blue-500", bg: "from-blue-500/20" },
+  { percent: 60,  icon: "🔫", title: "มือปราบ", desc: "เริ่มเก๋าเกมแล้วนะ", color: "text-green-400", border: "border-green-500", bg: "from-green-500/20" },
+  { percent: 40,  icon: "🐢", title: "เน็ตเต่า", desc: "มีความรู้บ้าง... ระวังหน่อย", color: "text-yellow-400", border: "border-yellow-500", bg: "from-yellow-500/20" },
+  { percent: 20,  icon: "🎣", title: "มือไว", desc: "ใจเย็นๆ นะวัยรุ่น", color: "text-orange-400", border: "border-orange-500", bg: "from-orange-500/20" },
+  { percent: 0,   icon: "🍼", title: "เบบี้", desc: "กลับไปดื่มนมก่อนลูก", color: "text-gray-400", border: "border-gray-500", bg: "from-gray-500/20" },
 ];
 
 function QuizContent() {
@@ -69,13 +53,14 @@ function QuizContent() {
   const diff = searchParams.get('diff') || 'easy';
   const config = GAME_CONFIG[diff.toLowerCase()] || GAME_CONFIG['easy'];
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  
   const [isMuted, setIsMuted] = useState(() => {
-  if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem('isMuted');
-    return saved !== null ? JSON.parse(saved) : false;
-  }
-  return false;
-});
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('isMuted');
+      return saved !== null ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
 
   // --- State ---
   const [gameState, setGameState] = useState<'loading' | 'playing' | 'finished'>('loading');
@@ -134,12 +119,12 @@ function QuizContent() {
     };
     fetchQuestions();
   }, [diff, router]);
-   useEffect(() => {
-    // ใช้ชื่อไฟล์ที่ถูกต้องตามใน public/sounds/
+
+  useEffect(() => {
     const audio = new Audio('/sounds/main_bgm.wav'); 
     audio.loop = true;   
-    audio.volume = 0.1; // เสียงเบา 10%
-    audio.muted = isMuted; // ตั้งค่า Mute ตาม State ล่าสุด
+    audio.volume = 0.1; 
+    audio.muted = isMuted;
     audioRef.current = audio;
 
     const playBgm = () => {
@@ -153,10 +138,8 @@ function QuizContent() {
       audio.pause();
       window.removeEventListener('click', playBgm);
     };
-  }, []); // [] เพื่อให้สร้าง Audio object แค่ครั้งเดียว
+  }, []); 
 
-
-  // --- 3. เพิ่ม useEffect เพื่อสั่ง Mute/Unmute ทันทีที่ State เปลี่ยน ---
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.muted = isMuted;
@@ -192,34 +175,26 @@ function QuizContent() {
     return () => clearInterval(timer);
   }, [timeLeft, isTimerRunning, handleTimeOut]);
 
-  // ใน QuizContent function ...
-
-const finishGame = async () => { 
+  const finishGame = async () => { 
       setGameState('finished');
       playSound('correct'); 
       if (audioRef.current) {
           audioRef.current.pause();
       }
 
-      // ✅ 2. เพิ่มส่วนบันทึกคะแนน (เฉพาะโหมดยาก)
+      // บันทึกคะแนน (เฉพาะโหมดยาก หรือตามเงื่อนไขที่ต้องการ)
       if (currentUser && diff === 'hard') {
           try {
               const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-              
-              // 🔍 Log ดูหน่อยว่าส่งอะไรไป
               const userIdToSend = currentUser.uid || currentUser.id;
-              console.log("📤 Sending Score:", { userId: userIdToSend, score });
-
-              if (!userIdToSend) {
-                  console.error("❌ Error: User ID Missing!");
-                  return;
-              }
+              
+              if (!userIdToSend) return;
 
               await fetch(`${apiUrl}/scores/save`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                      userId: userIdToSend, // ✅ แก้เป็นตัวแปรที่ดึงมาแล้วชัวร์ๆ
+                      userId: userIdToSend,
                       score: score,
                       gameType: 'quiz',
                       difficulty: 'hard'
@@ -276,14 +251,6 @@ const finishGame = async () => {
     setShowFeedback(true);
   };
 
-  const leaderboard = useMemo(() => {
-      if (gameState !== 'finished' || !currentUser) return [];
-      const botEntries: LeaderboardEntry[] = MOCK_BOTS.map(bot => ({ ...bot, isMe: false }));
-      const myEntry: LeaderboardEntry = { username: currentUser.username, score: score, isMe: true, avatar: '😎' };
-      return [...botEntries, myEntry].sort((a, b) => b.score - a.score);
-  }, [gameState, score, currentUser]);
-
-
   // --- RENDER: Loading ---
   if (gameState === 'loading') return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white space-y-4">
@@ -292,7 +259,7 @@ const finishGame = async () => {
     </div>
   );
 
-  // --- RENDER: Finished (Responsive & Compact) ---
+  // --- RENDER: Finished (Updated: No Leaderboard, All Thai) ---
   if (gameState === 'finished') {
       const totalPossibleScore = questions.length * (config.score + 10);
       const scorePercentage = totalPossibleScore > 0 ? (score / totalPossibleScore) * 100 : 0;
@@ -300,120 +267,62 @@ const finishGame = async () => {
       const accuracy = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
 
       return (
-        <main className="relative min-h-screen w-screen bg-slate-950 font-sans flex flex-col items-center justify-start md:justify-center p-4 overflow-y-auto">
+        <main className="relative min-h-screen w-screen bg-slate-950 font-sans flex flex-col items-center justify-center p-4 overflow-y-auto">
             
-            
-            {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอปลง) ✨ ==================== */}
+            {/* พื้นหลัง */}
             <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
-                
-                {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง + Grayscale) */}
                 <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
-                    <div 
-                        className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
-                        style={{ backgroundImage: "url('/images/bg1.png')" }} 
-                    ></div>
-                    <div 
-                        className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
-                        style={{ backgroundImage: "url('/images/bg1.png')" }} 
-                    ></div>
+                    <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
+                    <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
                 </div>
-
-                {/* 2. Overlay สีดำไล่ระดับ (Gradient) */}
                 <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
-
-                {/* 3. Effect แสงไฟ */}
                 <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
                 <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
             </div>
 
-            {/* Content */}
-            <div className="relative z-10 w-full max-w-4xl bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-5 md:p-8 text-center shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-fade-in flex flex-col gap-4 md:gap-6 my-4 md:my-0">
+            {/* Content Card */}
+            <div className="relative z-10 w-full max-w-lg bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 md:p-8 text-center shadow-[0_0_80px_rgba(0,0,0,0.5)] animate-fade-in flex flex-col gap-6">
                 
                 <h1 className="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 uppercase tracking-widest drop-shadow-lg">
-                    MISSION COMPLETE
+                    สรุปผลการทดสอบ
                 </h1>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                    
-                    {/* LEFT: Personal Result */}
-                    <div className="flex flex-col gap-4 order-1">
-                        <div className={`bg-slate-900 rounded-3xl p-6 border-4 ${myRank.border} relative overflow-hidden shadow-2xl flex flex-col justify-center items-center min-h-[250px]`}>
-                             <div className={`absolute inset-0 bg-gradient-to-br ${myRank.bg} to-transparent opacity-20`}></div>
-                            
-                            <div className="relative z-10 flex flex-col items-center">
-                                <div className="text-gray-400 text-xs md:text-sm font-bold uppercase tracking-widest mb-2">คะแนนรวมของคุณ</div>
-                                <div className="text-5xl md:text-7xl font-black text-white mb-2 md:mb-4 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] animate-[bounce_2s_infinite]">
-                                    {score}
-                                </div>
-                                <div className="w-24 md:w-32 h-1 bg-white/20 rounded-full my-2 md:my-4"></div>
-                                <div className="text-5xl md:text-6xl mb-2 md:mb-4 filter drop-shadow-lg">{myRank.icon}</div>
-                                <div className={`text-xl md:text-2xl font-black ${myRank.color} uppercase tracking-widest`}>{myRank.title}</div>
+                {/* Personal Result Only */}
+                <div className="flex flex-col gap-4">
+                    <div className={`bg-slate-900 rounded-3xl p-6 border-4 ${myRank.border} relative overflow-hidden shadow-2xl flex flex-col justify-center items-center min-h-[250px]`}>
+                         <div className={`absolute inset-0 bg-gradient-to-br ${myRank.bg} to-transparent opacity-20`}></div>
+                        
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="text-gray-400 text-sm font-bold uppercase tracking-widest mb-2">คะแนนรวมของคุณ</div>
+                            <div className="text-6xl md:text-7xl font-black text-white mb-2 md:mb-4 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] animate-[bounce_2s_infinite]">
+                                {score}
                             </div>
-                        </div>
-
-                        {/* Mini Stats Grid */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-slate-800 p-3 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
-                                <span className="text-[10px] md:text-xs text-gray-400 uppercase font-bold">ตอบถูก</span>
-                                <span className="text-lg md:text-xl font-black text-green-400">{correctCount} <span className="text-xs text-gray-500">/ {questions.length}</span></span>
-                            </div>
-                            <div className="bg-slate-800 p-3 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
-                                <span className="text-[10px] md:text-xs text-gray-400 uppercase font-bold">ความแม่นยำ</span>
-                                <span className="text-lg md:text-xl font-black text-blue-400">{accuracy}%</span>
-                            </div>
+                            <div className="w-32 h-1 bg-white/20 rounded-full my-4"></div>
+                            <div className="text-6xl mb-4 filter drop-shadow-lg">{myRank.icon}</div>
+                            <div className={`text-2xl font-black ${myRank.color} uppercase tracking-widest`}>{myRank.title}</div>
+                            <p className="text-gray-400 text-sm mt-1">{myRank.desc}</p>
                         </div>
                     </div>
 
-                    {/* RIGHT: Leaderboard */}
-                    <div className="bg-black/40 rounded-[2rem] border border-white/10 flex flex-col overflow-hidden h-[350px] md:h-[420px] relative backdrop-blur-sm order-2">
-                        <div className="p-3 md:p-4 bg-white/5 border-b border-white/5 flex items-center justify-between">
-                            <h3 className="text-base md:text-lg font-bold text-white flex items-center gap-2">
-                                <span className="text-lg md:text-xl">🏆</span> 
-                                <span className="uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600">Leaderboard</span>
-                            </h3>
-                            <span className="text-[10px] text-gray-400 font-mono bg-black/50 px-2 py-1 rounded">LIVE</span>
+                    {/* Mini Stats Grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-slate-800 p-3 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
+                            <span className="text-xs text-gray-400 uppercase font-bold">ตอบถูก</span>
+                            <span className="text-xl font-black text-green-400">{correctCount} <span className="text-xs text-gray-500">/ {questions.length}</span></span>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-                            {leaderboard.map((entry, index) => {
-                                let rankStyle = "bg-white/5 border-white/5 text-gray-300";
-                                let rankIcon = <span className="font-mono text-gray-500 text-sm md:text-base w-6 text-center">#{index + 1}</span>;
-                                if (index === 0) {
-                                    rankStyle = "bg-yellow-900/30 border-yellow-500/30 text-yellow-100";
-                                    rankIcon = <span className="text-lg w-6 text-center">🥇</span>;
-                                } else if (index === 1) {
-                                    rankStyle = "bg-slate-700/30 border-slate-400/30 text-slate-100";
-                                    rankIcon = <span className="text-lg w-6 text-center">🥈</span>;
-                                } else if (index === 2) {
-                                    rankStyle = "bg-orange-900/30 border-orange-500/30 text-orange-100";
-                                    rankIcon = <span className="text-lg w-6 text-center">🥉</span>;
-                                }
-                                if (entry.isMe) rankStyle += " ring-1 ring-blue-500 z-10 sticky top-0 bottom-0 shadow-lg !bg-blue-900/80 backdrop-blur-md";
-
-                                return (
-                                    <div key={index} className={`flex items-center justify-between p-2 rounded-xl border transition-all ${rankStyle}`}>
-                                        <div className="flex items-center gap-2 md:gap-3">
-                                            <div className="flex-shrink-0">{rankIcon}</div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-base md:text-lg">{entry.avatar}</span>
-                                                <span className={`font-bold text-xs md:text-sm ${entry.isMe ? 'text-blue-300' : ''}`}>
-                                                    {entry.username} {entry.isMe && <span className="text-[9px] bg-blue-600 text-white px-1 py-0.5 rounded ml-1 uppercase">YOU</span>}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className={`font-black text-sm md:text-base ${index < 3 ? 'text-white' : 'text-gray-400'} font-mono`}>{entry.score.toLocaleString()}</div>
-                                    </div>
-                                );
-                            })}
+                        <div className="bg-slate-800 p-3 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
+                            <span className="text-xs text-gray-400 uppercase font-bold">ความแม่นยำ</span>
+                            <span className="text-xl font-black text-blue-400">{accuracy}%</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Bottom Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center mt-2 order-3">
-                     <button onClick={() => window.location.reload()} className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-all shadow-lg active:scale-95 text-xs md:text-sm">
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mt-2">
+                     <button onClick={() => window.location.reload()} className="w-full sm:w-auto px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest hover:bg-white/10 transition-all shadow-lg active:scale-95 text-sm">
                         🔄 เล่นอีกครั้ง
                     </button>
-                    <Link href="/" className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold uppercase tracking-widest hover:shadow-lg transition-all flex justify-center items-center shadow-lg active:scale-95 text-xs md:text-sm">
+                    <Link href="/" className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold uppercase tracking-widest hover:shadow-lg transition-all flex justify-center items-center shadow-lg active:scale-95 text-sm">
                         🏠 หน้าหลัก
                     </Link>
                 </div>
@@ -434,25 +343,13 @@ const finishGame = async () => {
   return (
     <main className="relative min-h-screen w-screen overflow-hidden bg-slate-950 font-sans flex flex-col items-center justify-start md:justify-center p-4">
         
-        {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอปลง) ✨ ==================== */}
+        {/* พื้นหลัง */}
         <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
-            
-            {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง + Grayscale) */}
             <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
-                <div 
-                    className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
-                    style={{ backgroundImage: "url('/images/bg1.png')" }} 
-                ></div>
-                <div 
-                    className="w-1/2 h-full bg-cover bg-center grayscale-[50%]"
-                    style={{ backgroundImage: "url('/images/bg1.png')" }} 
-                ></div>
+                <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
+                <div className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" style={{ backgroundImage: "url('/images/bg1.png')" }}></div>
             </div>
-
-            {/* 2. Overlay สีดำไล่ระดับ (Gradient) */}
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
-
-            {/* 3. Effect แสงไฟ */}
             <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
             <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
         </div>
@@ -475,17 +372,17 @@ const finishGame = async () => {
                             <span className="animate-pulse text-sm md:text-base">⏳</span>
                             <span className="text-lg md:text-xl font-mono">{timeLeft.toString().padStart(2, '0')}</span>
                         </div>
-                        <span className="text-[10px] md:text-xs text-gray-400">TIME</span>
+                        <span className="text-[10px] md:text-xs text-gray-400">เวลา</span>
                     </div>
                 </div>
 
                 <div className="flex flex-col items-center justify-center gap-1 shrink-0 min-w-[70px] md:min-w-[100px]">
                     <div className="h-10 md:h-14 px-3 md:px-6 bg-white/10 rounded-xl md:rounded-2xl border border-white/10 flex flex-col items-center justify-center w-full shadow-lg">
-                        <span className="text-[8px] md:text-[10px] text-gray-400 font-black uppercase leading-none mb-0.5 md:mb-1">SCORE</span>
+                        <span className="text-[8px] md:text-[10px] text-gray-400 font-black uppercase leading-none mb-0.5 md:mb-1">คะแนน</span>
                         <span className="text-lg md:text-2xl font-black text-yellow-400 leading-none">{score}</span>
                     </div>
                     <div className="flex items-baseline gap-1 bg-black/20 px-2 py-0.5 md:px-3 md:py-1 rounded-lg border border-white/5 shadow-sm">
-                        <span className="text-[10px] md:text-sm font-bold text-gray-400">ข้อ</span>
+                        <span className="text-[10px] md:text-sm font-bold text-gray-400">ข้อที่</span>
                         <span className="text-sm md:text-2xl font-black text-blue-400">{currentQIndex + 1}</span>
                     </div>
                 </div>
@@ -526,9 +423,7 @@ const finishGame = async () => {
             </div>
         </div>
 
-        
-
-        {/* FEEDBACK POPUP (Responsive) */}
+        {/* FEEDBACK POPUP */}
         {showFeedback && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300"></div>
