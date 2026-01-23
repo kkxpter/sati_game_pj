@@ -235,7 +235,7 @@ export default function HomePage() {
 
           {/* ส่วน Mascot/Logo */}
           <div className="flex flex-col items-center relative z-54 mb-2">
-           <div className="relative w-full h-[280px] scale-125 -translate-y-5 drop-shadow-[0_0_40px_rgba(167,139,250,0.5)] transition-transform duration-700 hover:scale-[1.35] pointer-events-none">
+           <div className="relative w-full h-[270px] scale-125 -translate-y-4 drop-shadow-[0_0_40px_rgba(167,139,250,0.5)] transition-transform duration-700 hover:scale-[1.35] pointer-events-none">
               <Image
                 src="/images/Model02.gif"
                 alt="SATI Digital Mascot"
