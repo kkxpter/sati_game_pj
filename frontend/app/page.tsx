@@ -22,8 +22,8 @@ export default function HomePage() {
   const router = useRouter();
   const [view, setView] = useState<'home' | 'bet'>('home');
   
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null); // ใช้ Ref เดิมสำหรับเมนู Profile
+  // ✅ 1. เพิ่มบรรทัดนี้กลับมาครับ (เพื่อให้เมนูใช้งานได้)
+  const menuRef = useRef<HTMLDivElement>(null); 
   
   const [isMuted, setIsMuted] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
@@ -31,14 +31,21 @@ export default function HomePage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobileMenuExpanded, setIsMobileMenuExpanded] = useState(false);
 
+  // ✅ 2. ระบบเสียงใช้ Global Audio (ไม่มี audioRef แล้ว)
   const toggleMute = () => {
     const newMutedStatus = !isMuted;
     setIsMuted(newMutedStatus);
-    if (audioRef.current) audioRef.current.muted = newMutedStatus; 
+    
+    // สั่งงานตัวกลางที่อยู่ที่ Layout
+    const globalAudio = document.getElementById('global-bgm') as HTMLAudioElement;
+    if (globalAudio) {
+        globalAudio.muted = newMutedStatus;
+    }
+    
     localStorage.setItem('isMuted', JSON.stringify(newMutedStatus)); 
   };
 
-  // Logic Click Outside สำหรับ Profile Menu เท่านั้น
+  // Logic Click Outside สำหรับ Profile Menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (isMobileMenuExpanded && menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -51,6 +58,7 @@ export default function HomePage() {
     };
   }, [isMobileMenuExpanded]);
 
+  // ✅ 3. โหลดข้อมูล User และตั้งค่าเสียงเริ่มต้น (ไม่มี new Audio)
   useEffect(() => {
     const timer = setTimeout(() => {
         try {
@@ -66,45 +74,21 @@ export default function HomePage() {
             });
 
             if (storedUser) setUser(storedUser);
+
+            // โหลดสถานะ Mute ล่าสุดมาแสดงผล
+            const savedMute = localStorage.getItem('isMuted');
+            if (savedMute !== null) {
+                setIsMuted(JSON.parse(savedMute));
+            }
+
             setIsLoaded(true);
         } catch (error) {
             console.error("Error loading localStorage:", error);
             setIsLoaded(true); 
         }
-
-        const audio = new Audio('/sounds/main_bgm.wav'); 
-        audio.loop = true;   
-        audio.volume = 0.4;  
-        audioRef.current = audio;
-
-        const savedMute = localStorage.getItem('isMuted');
-        if (savedMute !== null) {
-            const initialMuted = JSON.parse(savedMute);
-            setIsMuted(initialMuted);
-            audio.muted = initialMuted;
-        }
-
-        const playBgm = () => {
-            if (audio.paused) {
-                audio.play().catch(() => {});
-            }
-        };
-        playBgm();
-        
-        const handleInteraction = () => {
-            playBgm();
-            window.removeEventListener('click', handleInteraction);
-        };
-        window.addEventListener('click', handleInteraction);
     }, 0);
 
-    return () => {
-        clearTimeout(timer);
-        if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
-        }
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   const handleLogout = () => {
@@ -157,7 +141,6 @@ export default function HomePage() {
             
             {/* --- 1. Profile Capsule (Expandable) --- */}
             {user ? (
-               // ✅ ผูก ref={menuRef} ไว้เฉพาะปุ่ม Profile เพื่อใช้ Click Outside
                <div 
                     ref={menuRef}
                     className={`
@@ -209,8 +192,7 @@ export default function HomePage() {
               </button>
             )}
 
-            {/* --- 2. Leaderboard Button (Independent) --- */}
-            {/* ✅ ไม่ใช้ isMobileMenuExpanded แล้ว */}
+            {/* --- 2. Leaderboard Button --- */}
             <div className={`transition-all duration-300 ${user ? 'opacity-100' : 'opacity-0 scale-0'}`}>
                  <button 
                     onClick={() => { 
@@ -220,26 +202,23 @@ export default function HomePage() {
                     className={`
                         flex items-center bg-black/40 backdrop-blur-md border border-yellow-500/30 rounded-full p-1.5 shadow-lg
                         transition-all duration-300 ease-out overflow-hidden hover:bg-yellow-500/10 hover:border-yellow-500/50
-                        w-[54px] md:w-48  /* ✅ มือถือ = กลมเล็ก (54px), คอม = ยาว (48) */
+                        w-[54px] md:w-48
                     `}
                 >
-                    {/* Icon (ถ้วยรางวัล) */}
                     <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-yellow-500/10 text-yellow-400 text-lg">
                         🏆
                     </div>
-
-                    {/* Text (โชว์เฉพาะบนคอม) */}
                    <div className={`
-    flex flex-col text-left ml-3 overflow-hidden whitespace-nowrap
-    opacity-0 w-0 md:opacity-100 md:w-auto
-`}>
-    <span className="text-[9px] text-yellow-500/70 font-bold uppercase tracking-wider">
-        จัดอันดับ {/* หรือ อันดับคะแนน */}
-    </span>
-    <span className="text-xs font-bold text-yellow-100 uppercase tracking-widest">
-        ยอดฝีมือ {/* หรือ ตารางผู้นำ */}
-    </span>
-</div>
+                        flex flex-col text-left ml-3 overflow-hidden whitespace-nowrap
+                        opacity-0 w-0 md:opacity-100 md:w-auto
+                    `}>
+                    <span className="text-[9px] text-yellow-500/70 font-bold uppercase tracking-wider">
+                        จัดอันดับ
+                    </span>
+                    <span className="text-xs font-bold text-yellow-100 uppercase tracking-widest">
+                        ยอดฝีมือ
+                    </span>
+                </div>
                 </button>
             </div>
 
@@ -247,19 +226,16 @@ export default function HomePage() {
       )}
 
      
-      {/* --- VIEW 1: HOME MENU (Logo ใหญ่จุใจ + ปุ่มระยะพอดี) --- */}
+      {/* --- VIEW 1: HOME MENU --- */}
       {view === 'home' && (
         <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 pb-8 animate-fade-in z-10 shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-hidden group/card mt-16 md:mt-12">
 
           <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
           <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
 
-          {/* ส่วน Mascot/Logo (z-20) */}
+          {/* ส่วน Mascot/Logo */}
           <div className="flex flex-col items-center relative z-54 mb-2">
-            {/* ✅ ปรับแก้ 1: เพิ่มความสูงเป็น h-56 (224px) 
-                เพื่อให้ Logo มีขนาดใหญ่สะใจ สมดุลกับพื้นที่ของปุ่มด้านล่าง 
-            */}
-           <div className="relative w-full h-[280px] scale-125 translate-y-4 drop-shadow-[0_0_40px_rgba(167,139,250,0.5)] transition-transform duration-700 hover:scale-[1.35] pointer-events-none">
+           <div className="relative w-full h-[280px] scale-125 -translate-y-5 drop-shadow-[0_0_40px_rgba(167,139,250,0.5)] transition-transform duration-700 hover:scale-[1.35] pointer-events-none">
               <Image
                 src="/images/Model02.gif"
                 alt="SATI Digital Mascot"
@@ -271,7 +247,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* ✅ ปรับแก้ 2: ใช้ gap-3 (12px) ให้ปุ่มห่างกันนิดหน่อยแบบพอดีๆ ไม่อึดอัดเหมือน gap-2 */}
           <div className="flex flex-col gap-3 relative z-30">
 
             {/* ปุ่ม 1: ตอบคำถาม */}

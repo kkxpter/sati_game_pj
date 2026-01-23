@@ -23,10 +23,23 @@ export default function ChatGamePage() {
   const [feedback, setFeedback] = useState<{ show: boolean; isCorrect: boolean; title: string; desc: string; icon: string; } | null>(null);
   const [isGameFinished, setIsGameFinished] = useState(false);
 
+  // ✅ แก้เป็นแบบนี้
+  const [isMuted, setIsMuted] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('isMuted');
+      return saved !== null ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
+
+  
+
   // Refs
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const runIdRef = useRef(0);
   const hasLoaded = useRef(false);
+
+
 
   // Helper Functions
   const scrollToBottom = () => {
@@ -99,14 +112,8 @@ export default function ChatGamePage() {
     runChatSequence(scenario.msgs);
   };
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isMuted, setIsMuted] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('isMuted');
-      return saved !== null ? JSON.parse(saved) : false;
-    }
-    return false;
-  });
+  
+
 
   // ✅ 2. เรียกใช้ saveScore() เมื่อจบเกมในฟังก์ชันนี้
   const goToNextScenario = useCallback(() => {
@@ -207,33 +214,21 @@ export default function ChatGamePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const audio = new Audio('/sounds/main_bgm.wav'); 
-    audio.loop = true;
-    audio.volume = 0.1; 
-    audio.muted = isMuted;
-    audioRef.current = audio;
 
-    const playBgm = () => audio.play().catch(() => {});
-    playBgm();
-    window.addEventListener('click', playBgm, { once: true });
 
-    return () => {
-      audio.pause();
-      window.removeEventListener('click', playBgm);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.muted = isMuted;
-  }, [isMuted]);
-
+ // ✅ แก้เป็นแบบนี้
   const toggleMute = () => {
     const newStatus = !isMuted;
     setIsMuted(newStatus);
+    
+    // สั่งงาน Global Audio ID
+    const globalAudio = document.getElementById('global-bgm') as HTMLAudioElement;
+    if (globalAudio) {
+        globalAudio.muted = newStatus;
+    }
+
     localStorage.setItem('isMuted', JSON.stringify(newStatus));
   };
-
   // --- Components ---
 
   const ChoiceButtons = () => (
@@ -422,12 +417,7 @@ export default function ChatGamePage() {
         </div>
 
       </div>
-      <button 
-        onClick={toggleMute}
-        className="fixed bottom-6 right-6 z-[120] p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl hover:scale-110 transition-all active:scale-95"
-      >
-        <span className="text-2xl">{isMuted ? '🔇' : '🔊'}</span>
-      </button>
+     
     </div>
   );
 }

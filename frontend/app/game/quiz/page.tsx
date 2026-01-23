@@ -52,15 +52,14 @@ function QuizContent() {
   const searchParams = useSearchParams();
   const diff = searchParams.get('diff') || 'easy';
   const config = GAME_CONFIG[diff.toLowerCase()] || GAME_CONFIG['easy'];
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   
-  const [isMuted, setIsMuted] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('isMuted');
-      return saved !== null ? JSON.parse(saved) : false;
-    }
-    return false;
-  });
+const [isMuted, setIsMuted] = useState(() => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('isMuted');
+    return saved !== null ? JSON.parse(saved) : false;
+  }
+  return false;
+});
 
   // --- State ---
   const [gameState, setGameState] = useState<'loading' | 'playing' | 'finished'>('loading');
@@ -120,31 +119,21 @@ function QuizContent() {
     fetchQuestions();
   }, [diff, router]);
 
+ 
   useEffect(() => {
-    const audio = new Audio('/sounds/main_bgm.wav'); 
-    audio.loop = true;   
-    audio.volume = 0.1; 
-    audio.muted = isMuted;
-    audioRef.current = audio;
+    const userStr = localStorage.getItem('user');
+    if (!userStr) { router.push('/login'); return; }
+    
+    setTimeout(() => {
+        setCurrentUser(JSON.parse(userStr));
+    }, 0);
+    
+    // ... (โค้ด fetchQuestions เดิม) ...
+}, [diff, router]);
 
-    const playBgm = () => {
-      audio.play().catch(() => {});
-    };
+ 
 
-    playBgm();
-    window.addEventListener('click', playBgm, { once: true });
 
-    return () => {
-      audio.pause();
-      window.removeEventListener('click', playBgm);
-    };
-  }, []); 
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.muted = isMuted;
-    }
-  }, [isMuted]);
 
   const handleTimeOut = useCallback(() => {
       setIsTimerRunning(false);
@@ -155,14 +144,19 @@ function QuizContent() {
       setEarnedPoints(0);
   }, []);
 
-  const toggleMute = () => {
-    if (audioRef.current) {
-      const newMutedStatus = !isMuted;
-      audioRef.current.muted = newMutedStatus;
-      setIsMuted(newMutedStatus);
-      localStorage.setItem('isMuted', JSON.stringify(newMutedStatus));
+ // ✅ แก้ไขเป็นแบบนี้
+const toggleMute = () => {
+    const newMutedStatus = !isMuted;
+    setIsMuted(newMutedStatus);
+    
+    // สั่งงาน Audio ตัวกลาง (Global)
+    const globalAudio = document.getElementById('global-bgm') as HTMLAudioElement;
+    if (globalAudio) {
+        globalAudio.muted = newMutedStatus;
     }
-  };
+    
+    localStorage.setItem('isMuted', JSON.stringify(newMutedStatus)); 
+};
 
   // --- Timer ---
   useEffect(() => {
@@ -177,10 +171,7 @@ function QuizContent() {
 
   const finishGame = async () => { 
       setGameState('finished');
-      playSound('correct'); 
-      if (audioRef.current) {
-          audioRef.current.pause();
-      }
+      playSound('correct');
 
       // บันทึกคะแนน (เฉพาะโหมดยาก หรือตามเงื่อนไขที่ต้องการ)
       if (currentUser && diff === 'hard') {
@@ -444,16 +435,7 @@ function QuizContent() {
                 </div>
             </div>
         )}
-
-    <button 
-            onClick={toggleMute}
-            className="fixed bottom-6 right-6 z-[120] p-4 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl hover:scale-110 transition-all active:scale-95"
-            title={isMuted ? "เปิดเพลง" : "ปิดเพลง"}
-        >
-            <span className="text-2xl">{isMuted ? '🔇' : '🔊'}</span>
-        </button>        
-
-        
+  
     </main>
   );
 }
