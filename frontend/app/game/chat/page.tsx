@@ -37,6 +37,33 @@ export default function ChatGamePage() {
     }
   };
 
+  // ✅ 1. เพิ่มฟังก์ชัน Save Score ตรงนี้
+  const saveScore = async () => {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return;
+    
+    const user = JSON.parse(userStr);
+    const userIdToSend = user.uid || user.id;
+
+    if (!userIdToSend) return;
+
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        await fetch(`${apiUrl}/scores/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: userIdToSend,
+                score: 100, // สมมติว่าจบเกมได้ 100 คะแนน (หรือจะใส่ 1 เพื่อนับรอบก็ได้)
+                gameType: 'chat'
+            })
+        });
+        console.log("✅ Chat Score Saved to Database!");
+    } catch (e) {
+        console.error("Save Score Error:", e);
+    }
+  };
+
   const runChatSequence = async (msgs: string[]) => {
     const currentRunId = ++runIdRef.current;
     setShowChoices(false);
@@ -73,21 +100,30 @@ export default function ChatGamePage() {
   };
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isMuted, setIsMuted] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('isMuted');
-      return saved !== null ? JSON.parse(saved) : false;
-    }
-    return false;
-  });
+  const [isMuted, setIsMuted] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('isMuted');
+      return saved !== null ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
 
+  // ✅ 2. เรียกใช้ saveScore() เมื่อจบเกมในฟังก์ชันนี้
   const goToNextScenario = useCallback(() => {
     setCurrentScenarioIdx(prev => {
         const next = prev + 1;
+        
+        // ถ้าเล่นครบทุกด่าน (จบเกม)
         if (next >= chatData.length) {
             setIsGameFinished(true);
+            
+            // 🔥 เรียกฟังก์ชันบันทึกลง Database
+            saveScore(); 
+
+            // (เก็บลง LocalStorage ด้วยเพื่อความชัวร์/Fallback)
             const saved = JSON.parse(localStorage.getItem('cyberStakes_played') || '{}');
             localStorage.setItem('cyberStakes_played', JSON.stringify({ ...saved, chat: (saved.chat || 0) + 1 }));
+            
             return prev;
         }
         loadScenario(chatData[next]);
@@ -164,41 +200,39 @@ export default function ChatGamePage() {
   };
 
   useEffect(() => {
-    
     if (hasLoaded.current) return;
     hasLoaded.current = true;
     const shuffled = [...chatData].sort(() => Math.random() - 0.5);
     loadScenario(shuffled[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   useEffect(() => {
-    // ใช้ไฟล์เดียวกับหน้าหลัก แต่เบากว่ามากเพื่อสมาธิ
-    const audio = new Audio('/sounds/main_bgm.wav'); 
-    audio.loop = true;
-    audio.volume = 0.1; // เบา 10%
-    audio.muted = isMuted;
-    audioRef.current = audio;
+    const audio = new Audio('/sounds/main_bgm.wav'); 
+    audio.loop = true;
+    audio.volume = 0.1; 
+    audio.muted = isMuted;
+    audioRef.current = audio;
 
-    const playBgm = () => audio.play().catch(() => {});
-    playBgm();
-    window.addEventListener('click', playBgm, { once: true });
+    const playBgm = () => audio.play().catch(() => {});
+    playBgm();
+    window.addEventListener('click', playBgm, { once: true });
 
-    return () => {
-      audio.pause();
-      window.removeEventListener('click', playBgm);
-    };
-  }, []);
+    return () => {
+      audio.pause();
+      window.removeEventListener('click', playBgm);
+    };
+  }, []);
 
-useEffect(() => {
-    if (audioRef.current) audioRef.current.muted = isMuted;
-  }, [isMuted]);
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.muted = isMuted;
+  }, [isMuted]);
 
-  // ✅ 4. ฟังก์ชันสลับเสียงที่จำค่าลงเครื่อง
-  const toggleMute = () => {
-    const newStatus = !isMuted;
-    setIsMuted(newStatus);
-    localStorage.setItem('isMuted', JSON.stringify(newStatus));
-  };
+  const toggleMute = () => {
+    const newStatus = !isMuted;
+    setIsMuted(newStatus);
+    localStorage.setItem('isMuted', JSON.stringify(newStatus));
+  };
 
   // --- Components ---
 
@@ -210,12 +244,10 @@ useEffect(() => {
                 onClick={() => handleChoice(choice)}
                 className="group relative w-full flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all duration-200 hover:border-white/30 hover:shadow-lg active:scale-[0.99] text-left"
             >
-                {/* Icon Box */}
                 <div className={`w-12 h-12 flex items-center justify-center rounded-xl font-black text-lg shrink-0 shadow-inner transition-colors ${i === 0 ? 'bg-gradient-to-br from-blue-500/20 to-blue-600/20 text-blue-400 group-hover:from-blue-500 group-hover:to-blue-600 group-hover:text-white' : 'bg-gradient-to-br from-purple-500/20 to-purple-600/20 text-purple-400 group-hover:from-purple-500 group-hover:to-purple-600 group-hover:text-white'}`}>
                     {['A', 'B'][i]}
                 </div>
                 
-                {/* Text */}
                 <div className="flex-1 min-w-0">
                     <p className="text-gray-200 text-sm font-medium group-hover:text-white leading-snug">
                         {choice.text}
@@ -234,7 +266,7 @@ useEffect(() => {
           {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอป) ✨ ==================== */}
           <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
               
-              {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง + Grayscale) */}
+              {/* 1. รูปภาพเลื่อน */}
               <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
                   <div 
                       className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
@@ -246,7 +278,7 @@ useEffect(() => {
                   ></div>
               </div>
 
-              {/* 2. Overlay สีดำไล่ระดับ (Gradient) */}
+              {/* 2. Overlay สีดำไล่ระดับ */}
               <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
 
               {/* 3. Effect แสงไฟ */}
@@ -267,10 +299,8 @@ useEffect(() => {
   return (
     <div className="relative h-screen w-screen flex justify-center items-center bg-slate-950 overflow-hidden font-sans">
       
-      {/* ==================== ✨ พื้นหลัง (รูปภาพเลื่อน + สีดรอป) ✨ ==================== */}
+      {/* ==================== ✨ พื้นหลัง ==================== */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-slate-950 pointer-events-none">
-          
-          {/* 1. รูปภาพเลื่อน (ปรับให้ช้าลง + Opacity ต่ำลง + Grayscale) */}
           <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
               <div 
                   className="w-1/2 h-full bg-cover bg-center grayscale-[50%]" 
@@ -281,11 +311,7 @@ useEffect(() => {
                   style={{ backgroundImage: "url('/images/bg1.png')" }} 
               ></div>
           </div>
-
-          {/* 2. Overlay สีดำไล่ระดับ (Gradient) */}
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-900/60 to-slate-950/90 z-10"></div>
-
-          {/* 3. Effect แสงไฟ */}
           <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse-slow mix-blend-screen z-20"></div>
           <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-600/10 blur-[120px] animate-pulse-slow delay-1000 mix-blend-screen z-20"></div>
       </div>
@@ -295,7 +321,6 @@ useEffect(() => {
 
         {/* --- Phone Frame (Center) --- */}
         <div className="relative z-20 w-[320px] h-[600px] md:h-[650px] md:border-[8px] md:border-gray-800 md:rounded-[40px] bg-gray-900/90 flex flex-col overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.6)] backdrop-blur-md ring-1 ring-white/10 shrink-0">
-            {/* ... Dynamic Island, Header, Chat Box (เหมือนเดิม) ... */}
             
             {/* Dynamic Island */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-b-xl z-50 hidden md:flex justify-end items-center pr-3 shadow-md">
@@ -387,21 +412,13 @@ useEffect(() => {
         </div>
 
         {/* --- DESKTOP CHOICE PANEL (Side) --- */}
-        {/* ✅ Wrapper ใหญ่ที่จัดตำแหน่งแบบ Absolute */}
         <div className={`hidden md:flex flex-col gap-4 absolute left-[calc(50%+190px)] top-1/2 -translate-y-1/2 w-[400px] z-10 transition-all duration-500 ${showChoices ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}`}>
-            
-            {/* 1. ข้อความอยู่นอกกล่อง */}
             <div className="text-white font-black text-3xl leading-tight drop-shadow-xl pl-2">
                 คุณจะเลือกตอบอย่างไร?
             </div>
-
-            {/* 2. กล่องใสใส่ปุ่ม */}
             <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 shadow-2xl">
                 <ChoiceButtons />
-            
-            
             </div>
-
         </div>
 
       </div>
