@@ -185,7 +185,7 @@ export default function HomePage() {
                         onClick={() => { playSound('click'); router.push('/profile'); }}
                         className="flex flex-col text-left mr-3 hover:opacity-80 transition-opacity w-full"
                       >
-                          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Tap to View</span>
+                          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">โปรไฟล์</span>
                           <span className="text-sm font-black text-white leading-none truncate max-w-[80px]">{user.username}</span>
                       </button>
 
@@ -229,46 +229,54 @@ export default function HomePage() {
                     </div>
 
                     {/* Text (โชว์เฉพาะบนคอม) */}
-                    <div className={`
-                        flex flex-col text-left ml-3 overflow-hidden whitespace-nowrap
-                        opacity-0 w-0 md:opacity-100 md:w-auto /* ✅ ซ่อนบนมือถือ, โชว์บนคอม */
-                    `}>
-                        <span className="text-[9px] text-yellow-500/70 font-bold uppercase tracking-wider">Ranking</span>
-                        <span className="text-xs font-bold text-yellow-100 uppercase tracking-widest">Leaderboard</span>
-                    </div>
+                   <div className={`
+    flex flex-col text-left ml-3 overflow-hidden whitespace-nowrap
+    opacity-0 w-0 md:opacity-100 md:w-auto
+`}>
+    <span className="text-[9px] text-yellow-500/70 font-bold uppercase tracking-wider">
+        จัดอันดับ {/* หรือ อันดับคะแนน */}
+    </span>
+    <span className="text-xs font-bold text-yellow-100 uppercase tracking-widest">
+        ยอดฝีมือ {/* หรือ ตารางผู้นำ */}
+    </span>
+</div>
                 </button>
             </div>
 
           </div>
       )}
 
-      {/* --- VIEW 1: HOME MENU (เหมือนเดิม) --- */}
+     
+      {/* --- VIEW 1: HOME MENU (Logo ใหญ่จุใจ + ปุ่มระยะพอดี) --- */}
       {view === 'home' && (
-        <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 animate-fade-in z-10 shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-visible group/card mt-16 md:mt-12">
-          
+        <div className="relative w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-6 pb-8 animate-fade-in z-10 shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-hidden group/card mt-16 md:mt-12">
+
           <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-purple-400/50 to-transparent opacity-70"></div>
           <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent opacity-70"></div>
 
-          {/* ส่วน Mascot (z-20) */}
-          <div className="flex flex-col items-center relative z-20">
-            <div className="relative w-[160%] h-[360px] -mt-28 drop-shadow-[0_0_40px_rgba(167,139,250,0.5)] transition-transform duration-700 hover:scale-105 pointer-events-none">
-              <Image 
-                src="/images/Model02.gif" 
-                alt="SATI Digital Mascot" 
-                fill 
-                className="object-contain" 
+          {/* ส่วน Mascot/Logo (z-20) */}
+          <div className="flex flex-col items-center relative z-54 mb-2">
+            {/* ✅ ปรับแก้ 1: เพิ่มความสูงเป็น h-56 (224px) 
+                เพื่อให้ Logo มีขนาดใหญ่สะใจ สมดุลกับพื้นที่ของปุ่มด้านล่าง 
+            */}
+           <div className="relative w-full h-[280px] scale-125 translate-y-4 drop-shadow-[0_0_40px_rgba(167,139,250,0.5)] transition-transform duration-700 hover:scale-[1.35] pointer-events-none">
+              <Image
+                src="/images/Model02.gif"
+                alt="SATI Digital Mascot"
+                fill
+                className="object-contain object-center"
                 priority
-                unoptimized 
+                unoptimized
               />
             </div>
           </div>
 
-          {/* ✅ แก้ไขตรงนี้: เปลี่ยน z-10 เป็น z-30 เพื่อให้ปุ่มอยู่เหนือรูปภาพ */}
-          <div className="flex flex-col gap-3 relative z-30 -mt-4">
-            
-            {/* ... (ปุ่มต่างๆ เหมือนเดิม) ... */}
-            <button onClick={() => handleStart('normal')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-green-400/50 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]'}`}>
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          {/* ✅ ปรับแก้ 2: ใช้ gap-3 (12px) ให้ปุ่มห่างกันนิดหน่อยแบบพอดีๆ ไม่อึดอัดเหมือน gap-2 */}
+          <div className="flex flex-col gap-3 relative z-30">
+
+            {/* ปุ่ม 1: ตอบคำถาม */}
+            <button onClick={() => handleStart('normal')} className={`relative group w-full p-3 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-green-400/50 hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]'}`}>
+               <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="flex items-center gap-4 relative z-10">
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-green-500/20 border border-green-500/30 text-green-300 group-hover:scale-110'}`}>
                     {!user ? '🔒' : '🧠'}
@@ -284,11 +292,10 @@ export default function HomePage() {
                 <div className="text-green-400 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-bold text-xl">→</div>
               </div>
             </button>
-            
-            {/* ... ปุ่มอื่นๆ ... */}
-            <button onClick={() => handleStart('virus')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-red-400/50 hover:shadow-[0_0_20px_rgba(248,113,113,0.2)]'}`}>
-                {/* ... เนื้อหาปุ่ม ... */}
-                <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+            {/* ปุ่ม 2: ทุบไวรัส */}
+            <button onClick={() => handleStart('virus')} className={`relative group w-full p-3 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-red-400/50 hover:shadow-[0_0_20px_rgba(248,113,113,0.2)]'}`}>
+                 <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="flex items-center gap-4 relative z-10">
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-red-500/20 border border-red-500/30 text-red-300 group-hover:scale-110'}`}>
                     {!user ? '🔒' : '🔨'}
@@ -305,9 +312,9 @@ export default function HomePage() {
                 </div>
             </button>
 
-            <button onClick={() => handleStart('chat')} className={`relative group w-full p-4 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(96,165,250,0.2)]'}`}>
-                {/* ... เนื้อหาปุ่ม ... */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            {/* ปุ่ม 3: แชท */}
+            <button onClick={() => handleStart('chat')} className={`relative group w-full p-3 rounded-xl border transition-all duration-300 overflow-hidden ${!user ? 'bg-white/5 border-white/5 opacity-70 hover:opacity-100 hover:border-white/20' : 'bg-white/5 border-white/10 hover:border-blue-400/50 hover:shadow-[0_0_20px_rgba(96,165,250,0.2)]'}`}>
+                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div className="flex items-center gap-4 relative z-10">
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl transition-transform duration-300 ${!user ? 'bg-gray-700 text-gray-400 grayscale' : 'bg-blue-500/20 border border-blue-500/30 text-blue-300 group-hover:scale-110'}`}>
                     {!user ? '🔒' : '💬'}
