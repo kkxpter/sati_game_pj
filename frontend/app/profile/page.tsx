@@ -5,13 +5,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { playSound } from '@/app/lib/sound';
 
-// ... (Interfaces และ Icons เหมือนเดิม ไม่ต้องแก้) ...
 // 1. Interfaces
 interface UserData {
   uid?: number;
   id?: number;
   username: string;
-  emoji?: string;
+  // emoji?: string; // ❌ ลบออก
   password?: string;
 }
 
@@ -21,8 +20,10 @@ interface GameStats {
   chat: number;   
 }
 
+// 2. Icons
 const Icons = {
   User: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+  UserBig: () => <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   Lock: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
   LogOut: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
   Home: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
@@ -33,8 +34,6 @@ const Icons = {
   ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
 };
 
-const EMOJI_OPTIONS = ['🧠', '🎮', '🔥', '⚡', '🐱', '🤖', '👻', '💎', '🦊', '👾', '👽', '🦄', '💀', '🤡', '🌟'];
-
 export default function ProfilePage() {
   const router = useRouter();
   
@@ -42,15 +41,16 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<GameStats>({ normal: 0, virus: 0, chat: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
   const [editMode, setEditMode] = useState<'none' | 'info' | 'password'>('none');
-  const [isLoading, setIsLoading] = useState(false); // เพิ่ม state สำหรับ Loading
+  const [isLoading, setIsLoading] = useState(false);
   
   const [tempUsername, setTempUsername] = useState('');
-  const [tempEmoji, setTempEmoji] = useState('🧠');
+  
+  // Password States
   const [currentPasswordInput, setCurrentPasswordInput] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // fetchGameStats (เหมือนเดิม)
+  // Fetch Stats
   const fetchGameStats = async (userId: number) => {
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -63,15 +63,9 @@ export default function ProfilePage() {
                 virus: data.virus || 0,
                 chat: data.chat || 0
             });
-        } else {
-            console.warn("API Error, falling back to local storage");
-            const savedStatsStr = localStorage.getItem('cyberStakes_played');
-            if (savedStatsStr) setStats(JSON.parse(savedStatsStr));
         }
     } catch (error) {
         console.error("Failed to fetch stats:", error);
-        const savedStatsStr = localStorage.getItem('cyberStakes_played');
-        if (savedStatsStr) setStats(JSON.parse(savedStatsStr));
     }
   };
 
@@ -83,16 +77,9 @@ export default function ProfilePage() {
         const userData = JSON.parse(storedUserStr);
         setUser(userData);
         setTempUsername(userData.username);
-        setTempEmoji(userData.emoji || '🧠');
 
         const uid = userData.uid || userData.id;
-        if (uid) {
-            fetchGameStats(uid);
-        } else {
-            const savedStatsStr = localStorage.getItem('cyberStakes_played');
-            if (savedStatsStr) setStats(JSON.parse(savedStatsStr));
-        }
-
+        if (uid) fetchGameStats(uid);
       } else {
         router.push('/login');
       }
@@ -102,25 +89,52 @@ export default function ProfilePage() {
     return () => clearTimeout(timer);
   }, [router]);
 
-  const handleSaveInfo = () => {
+  // 🔥🔥🔥 แก้ไข: บันทึกชื่อลง Database 🔥🔥🔥
+  const handleSaveInfo = async () => {
     playSound('click');
     if (!user) return;
     if (!tempUsername.trim()) {
         alert("กรุณาระบุชื่อผู้ใช้งาน");
         return;
     }
-    const updatedUser = { ...user, username: tempUsername, emoji: tempEmoji };
-    localStorage.setItem('user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
-    setEditMode('none');
+
+    setIsLoading(true);
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        
+        // 1. ส่งข้อมูลไปอัปเดตที่ Backend
+        const res = await fetch(`${apiUrl}/user/update-profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: user.uid || user.id,
+                username: tempUsername
+            })
+        });
+
+        if (res.ok) {
+            // 2. ถ้าสำเร็จ อัปเดต LocalStorage และ State
+            const updatedUser = { ...user, username: tempUsername };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            setUser(updatedUser);
+            setEditMode('none');
+            // alert('บันทึกข้อมูลเรียบร้อย');
+        } else {
+            alert('ไม่สามารถอัปเดตข้อมูลได้');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('เกิดข้อผิดพลาดในการเชื่อมต่อ');
+    } finally {
+        setIsLoading(false);
+    }
   };
 
-  // 🔥🔥🔥 แก้ไขฟังก์ชันนี้: ยิง API ไปเช็คกับ Database 🔥🔥🔥
+  // 🔥🔥🔥 บันทึกรหัสผ่านลง Database 🔥🔥🔥
   const handleSavePassword = async () => {
     playSound('click');
     if (!user) return;
 
-    // 1. ตรวจสอบข้อมูลเบื้องต้นที่ Frontend ก่อน
     if (!currentPasswordInput) {
         alert('กรุณากรอกรหัสผ่านปัจจุบัน');
         return;
@@ -134,17 +148,17 @@ export default function ProfilePage() {
       return;
     }
 
-    setIsLoading(true); // เริ่มโหลด
+    setIsLoading(true); 
 
     try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        
-        // 2. ส่งข้อมูลไปที่ Backend (ต้องแก้ userId ให้ตรงกับ Route ที่สร้างไว้ เช่น /user/change-password)
+        //const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        const apiUrl = 'http://localhost:4000';
+
         const res = await fetch(`${apiUrl}/user/change-password`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                userId: user.uid || user.id, // ส่ง UID ไปเช็ค
+                userId: user.uid || user.id,
                 currentPassword: currentPasswordInput,
                 newPassword: newPassword
             })
@@ -153,18 +167,15 @@ export default function ProfilePage() {
         const data = await res.json();
 
         if (res.ok) {
-            // 3. ถ้าสำเร็จ อัปเดต LocalStorage
             const updatedUser = { ...user, password: newPassword };
             localStorage.setItem('user', JSON.stringify(updatedUser));
             
-            // เคลียร์ค่าในฟอร์ม
             setCurrentPasswordInput('');
             setNewPassword('');
             setConfirmPassword('');
             setEditMode('none');
             alert('เปลี่ยนรหัสผ่านสำเร็จ!');
         } else {
-            // 4. ถ้าไม่สำเร็จ (เช่น รหัสเดิมผิด) แจ้งเตือนจากข้อความที่ Server ส่งมา
             alert(data.error || 'เกิดข้อผิดพลาดในการเปลี่ยนรหัสผ่าน');
         }
 
@@ -172,7 +183,7 @@ export default function ProfilePage() {
         console.error("Change password error:", error);
         alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
     } finally {
-        setIsLoading(false); // จบการโหลด
+        setIsLoading(false);
     }
   };
 
@@ -189,7 +200,7 @@ export default function ProfilePage() {
   return (
     <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 font-sans text-slate-200 overflow-hidden">
       
-      {/* ... (Background ส่วนเดิม) ... */}
+      {/* Background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-slate-950"></div>
         <div className="absolute inset-0 z-0 w-[200%] h-full animate-scroll-bg opacity-40">
@@ -209,20 +220,21 @@ export default function ProfilePage() {
                     โปรไฟล์
                 </h1>
 
-                {/* ... (Avatar Section เหมือนเดิม) ... */}
+                {/* --- 1. Avatar Section (เอา Emoji ออก ใส่ Icon คนแทน) --- */}
                 <div className="relative group">
                     <div className="absolute -inset-4 bg-gradient-to-tr from-purple-600 to-blue-600 rounded-full blur-xl opacity-40 group-hover:opacity-60 transition duration-500 animate-pulse-slow"></div>
                     <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full p-[3px] bg-gradient-to-tr from-purple-400 via-white/50 to-blue-400">
-                        <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-6xl shadow-inner relative overflow-hidden">
-                            <span className="drop-shadow-lg transform group-hover:scale-110 transition-transform duration-300 select-none">
-                                {editMode === 'info' ? tempEmoji : user?.emoji}
-                            </span>
+                        <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-gray-300 shadow-inner relative overflow-hidden">
+                            {/* ใช้ไอคอนคนแทน */}
+                            <div className="drop-shadow-lg transform group-hover:scale-110 transition-transform duration-300">
+                                <Icons.UserBig />
+                            </div>
                             <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/10 to-transparent rounded-t-full pointer-events-none"></div>
                         </div>
                     </div>
                 </div>
 
-                {/* ... (Stats View เหมือนเดิม) ... */}
+                {/* --- 2. Stats & Name View --- */}
                 {editMode === 'none' && user && (
                     <div className="w-full text-center animate-fade-in space-y-6">
                         <div className="space-y-1">
@@ -230,6 +242,8 @@ export default function ProfilePage() {
                                 {user.username}
                             </h2>
                         </div>
+
+                        {/* Stats Grid */}
                         <div className="grid grid-cols-3 gap-3 w-full">
                             <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-green-500/10 to-transparent border border-green-500/20 relative group hover:bg-green-500/5 transition-all">
                                 <div className="text-green-400 mb-1 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]">
@@ -256,11 +270,11 @@ export default function ProfilePage() {
                     </div>
                 )}
 
-                {/* ... (Edit Info Form เหมือนเดิม) ... */}
+                {/* --- 3. Edit Name Form (เอา Emoji ออก) --- */}
                 {editMode === 'info' && (
                     <div className="w-full space-y-5 animate-slide-up text-left bg-white/5 p-4 rounded-2xl border border-white/5">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-300 ml-1">ชื่อที่ใช้แสดง</label>
+                            <label className="text-xs font-bold text-gray-300 ml-1">เปลี่ยนชื่อที่ใช้แสดง</label>
                             <input 
                                 type="text" 
                                 value={tempUsername} 
@@ -268,31 +282,17 @@ export default function ProfilePage() {
                                 className="w-full bg-black/40 border border-white/10 focus:border-purple-500/50 text-white p-3 rounded-xl outline-none focus:ring-2 ring-purple-500/20 transition-all placeholder:text-gray-600"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-300 ml-1">เลือกอวตาร</label>
-                            <div className="grid grid-cols-5 gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
-                                {EMOJI_OPTIONS.map(e => (
-                                    <button 
-                                        key={e} 
-                                        onClick={() => setTempEmoji(e)} 
-                                        className={`aspect-square text-2xl rounded-lg flex items-center justify-center transition-all duration-200 border ${
-                                            tempEmoji === e 
-                                            ? 'bg-purple-600/80 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)] scale-105' 
-                                            : 'bg-white/5 border-transparent hover:bg-white/10'
-                                        }`}
-                                    >
-                                        {e}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        <button onClick={handleSaveInfo} className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95">
-                            <Icons.Check /> บันทึกข้อมูล
+                        <button 
+                            onClick={handleSaveInfo} 
+                            disabled={isLoading}
+                            className={`w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            {isLoading ? 'กำลังบันทึก...' : <><Icons.Check /> บันทึกการเปลี่ยนแปลง</>}
                         </button>
                     </div>
                 )}
 
-                {/* --- 4. Edit Password Form (ปรับปรุงใหม่ให้ disable ปุ่มตอน loading) --- */}
+                {/* --- 4. Edit Password Form --- */}
                 {editMode === 'password' && (
                     <div className="w-full space-y-4 animate-slide-up text-left bg-white/5 p-4 rounded-2xl border border-white/5">
                         <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs text-center flex items-center justify-center gap-2">
@@ -337,7 +337,7 @@ export default function ProfilePage() {
                     </div>
                 )}
 
-                {/* --- 5. Menu List Buttons (เหมือนเดิม) --- */}
+                {/* --- 5. Menu List Buttons --- */}
                 <div className="w-full flex flex-col gap-2 pt-2">
                     {editMode === 'none' ? (
                         <>
@@ -346,7 +346,7 @@ export default function ProfilePage() {
                                     <div className="p-2 rounded-lg bg-purple-500/20 text-purple-300">
                                         <Icons.User />
                                     </div>
-                                    <span className="font-bold text-sm text-gray-200 group-hover:text-white">แก้ไขข้อมูลส่วนตัว</span>
+                                    <span className="font-bold text-sm text-gray-200 group-hover:text-white">เปลี่ยนชื่อ</span>
                                 </div>
                                 <div className="text-gray-500 group-hover:text-white transition-colors"><Icons.ChevronRight /></div>
                             </button>
