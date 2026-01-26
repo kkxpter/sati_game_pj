@@ -151,8 +151,8 @@ export default function ProfilePage() {
     setIsLoading(true); 
 
     try {
-        //const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-        const apiUrl = 'http://localhost:4000';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        //const apiUrl = 'http://localhost:4000';
 
         const res = await fetch(`${apiUrl}/user/change-password`, {
             method: 'POST',
