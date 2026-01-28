@@ -48,7 +48,8 @@ export default function (prisma) {
                 message: "สมัครสมาชิกเรียบร้อย!", 
                 user: { 
                     uid: newUser.uid, 
-                    username: newUser.username 
+                    username: newUser.username, 
+                    role: newUser.role
                 } 
             });
 
@@ -82,7 +83,9 @@ export default function (prisma) {
                         uid: user.uid, // 👈 จุดสำคัญคือตรงนี้ (ต้องเป็น uid)
                         username: user.username,
                         email: user.email,
-                        phone: user.phone
+                        phone: user.phone,
+                        role: user.role
+                        
                     }
                 });
             } else {

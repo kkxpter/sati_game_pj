@@ -15,13 +15,11 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    // ✅ 1. ใช้ URL Server (ถ้าเล่นในเครื่องให้ใช้ localhost ถ้าขึ้น server ใช้ vercel)
-    // แนะนำ: ตอนเทสแก้บั๊ก ให้ใช้ http://localhost:4000 ก่อนจะดีที่สุดครับ
-    // ✅ แก้ตรงนี้: ให้ดึงจาก Env ก่อน ถ้าไม่มีค่อยใช้ localhost
-    // (เวลาขึ้น Server จริง มันจะดึงจาก Env ที่เราตั้งไว้)
+    // ✅ 1. ใช้ URL Server
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    // const apiUrl = 'http://localhost:4000';
+    console.log("🌐 Connecting to API:", apiUrl);
 
-    console.log("🌐 Connecting to API:", apiUrl); // เช็คดูว่ามันยิงไปไหน
     try {
       const res = await fetch(`${apiUrl}/login`, {
         method: 'POST',
@@ -40,38 +38,47 @@ export default function LoginPage() {
 
       console.log("✅ Login API Response:", data);
 
-      // ==========================================
-      // 🚨 จุดที่แก้: รับได้ทั้ง uid และ id
-      // ==========================================
-      
       // 1. เช็คว่ามี user object ไหม
       if (!data.user) {
           throw new Error("Server ไม่ส่งข้อมูล User กลับมา");
       }
 
-      // 2. พยายามดึง ID ออกมา (ไม่ว่าจะชื่อ uid หรือ id)
+      // 2. ดึง ID และ Role ออกมา
       const serverUserId = data.user.uid || data.user.id;
-
-      // 3. ถ้าไม่มีสักตัว ค่อย Error
       if (!serverUserId) {
-          console.error("User Data ที่ได้:", data.user);
-          throw new Error("Server ส่ง User มา แต่ไม่มี ID (หาไม่เจอทั้ง uid และ id)");
+          throw new Error("Server ส่ง User มา แต่ไม่มี ID");
       }
 
-      // 4. สร้าง object ที่สมบูรณ์เพื่อบันทึก
+      // ✅ ดึง Role (ถ้าไม่มีให้เป็น 'user')
+      const userRole = data.user.role || 'user';
+
+      // 3. สร้าง object เพื่อบันทึก (รวม Role เข้าไปด้วย)
       const userDataToSave = {
-          uid: serverUserId,        // บังคับให้ชื่อ uid เสมอในเครื่องเรา
-          id: serverUserId,         // เผื่อไว้
+          uid: serverUserId,        
+          id: serverUserId,         
           username: data.user.username,
           email: data.user.email,
-          phone: data.user.phone
+          phone: data.user.phone,
+          role: userRole // ✅ เพิ่ม Role เข้าไปใน LocalStorage
       };
 
-      // 5. บันทึก
+      // 4. บันทึก
       localStorage.setItem('user', JSON.stringify(userDataToSave));
       console.log("💾 Saved to LocalStorage:", userDataToSave);
 
-      window.location.href = '/'; 
+      // ============================================
+      // 🚦 จุดแยกทาง (Redirect Logic)
+      // ============================================
+      
+      if (userRole === 'admin') {
+          // 👑 ถ้าเป็น Admin -> ไปหน้า Dashboard
+          console.log("👑 Admin Login Success -> Redirecting to Dashboard");
+          router.push('/admin'); 
+      } else {
+          // 👤 ถ้าเป็น User ธรรมดา -> ไปหน้าเล่นเกม
+          console.log("👋 User Login Success -> Redirecting to Home");
+          router.push('/'); 
+      }
 
     } catch (err: unknown) { 
       console.error("Login Error:", err);
